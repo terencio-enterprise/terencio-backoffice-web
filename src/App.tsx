@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from "react";
+import {
+    BarChart3,
+    CreditCard,
+    LayoutDashboard,
+    Menu,
+    Package,
+    Settings,
+    Smartphone,
+    Store,
+    Users,
+    X
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Topbar } from "./components/layout/Topbar";
-import DashboardView from "./modules/dashboard/components/DashboardView";
-import { 
-  LayoutDashboard, Smartphone, Package, Users, CreditCard, BarChart3, Settings, Store, Menu, X 
-} from "lucide-react";
 import { cn } from "./lib/utils";
+import DashboardView from "./modules/dashboard/components/DashboardView";
 
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -28,13 +37,13 @@ export default function App() {
   ];
 
   return (
-    <div className={cn("min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 transition-colors", isDarkMode ? "dark" : "")}>
+    <div className={cn("min-h-screen flex flex-col lg:flex-row transition-colors", isDarkMode ? "dark" : "")} style={{ backgroundColor: 'var(--background)', color: 'var(--text-primary)' }}>
       
       {/* Mobile Toggle (Visible only on small screens) */}
-      <div className="lg:hidden flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <div className="lg:hidden flex items-center justify-between p-4 border-b" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center">
-            <Store className="text-white w-5 h-5" />
+          <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: 'var(--accent)' }}>
+            <Store className="w-5 h-5" style={{ color: 'var(--text-inverse)' }} />
           </div>
           <span className="font-bold text-lg">RetailOS</span>
         </div>
@@ -66,18 +75,19 @@ export default function App() {
             <DashboardView />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 animate-in fade-in slide-in-from-bottom-4">
-              <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-                <Settings className="w-10 h-10 text-slate-300 animate-spin-slow" />
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--surface-alt)' }}>
+                <Settings className="w-10 h-10 animate-spin-slow" style={{ color: 'var(--text-tertiary)' }} />
               </div>
               <div>
                 <h2 className="text-xl font-bold">Module Under Construction</h2>
-                <p className="text-slate-500 max-w-sm mx-auto mt-2">
+                <p className="max-w-sm mx-auto mt-2" style={{ color: 'var(--text-secondary)' }}>
                   The {activeModule} system is being integrated. Use the Dashboard to view current operational health.
                 </p>
               </div>
               <button 
                 onClick={() => setActiveModule("dashboard")}
-                className="text-indigo-600 font-medium hover:underline"
+                className="font-medium hover:underline"
+                style={{ color: 'var(--accent)' }}
               >
                 Return to Dashboard
               </button>
@@ -91,8 +101,8 @@ export default function App() {
         .animate-spin-slow { animation: spin-slow 8s linear infinite; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); }
       `}} />
     </div>
   );

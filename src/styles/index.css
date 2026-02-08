@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* * CLEAN APP PALETTE (Light & Dark)
+ * Structure: Semantic Tokens (Direct Hex Values)
+ */
+
+:root {
+  /* --- 1. LIGHT THEME (Default) --- */
+
+  /* Backgrounds */
+  --background: #f8fafc;        /* Main app background (slate-50) */
+  --surface:    #ffffff;        /* Cards, Sidebar, Modals (white) */
+  --surface-alt: #f1f5f9;       /* Hover states, active items (slate-100) */
+  --surface-hover: #f8fafc;     /* Subtle hover (slate-50) */
+
+  /* Typography */
+  --text-primary:   #0f172a;    /* Headings (slate-900) */
+  --text-secondary: #64748b;    /* Body text (slate-500) */
+  --text-tertiary:  #94a3b8;    /* Placeholders, disabled (slate-400) */
+  --text-inverse:   #ffffff;    /* Text on dark buttons */
+
+  /* Brand / Actions */
+  --primary:       #0f172a;     /* Main buttons (slate-900) */
+  --primary-hover: #334155;     /* Primary hover (slate-700) */
+  
+  --secondary:       #e2e8f0;   /* Secondary buttons (slate-200) */
+  --secondary-hover: #cbd5e1;   /* Secondary hover (slate-300) */
+
+  --accent:       #4f46e5;      /* Links, highlights (indigo-600) */
+  --accent-hover: #4338ca;      /* Accent hover (indigo-700) */
+  --accent-light: #eef2ff;      /* Accent background (indigo-50) */
+
+  /* Status Colors */
+  --success:       #10b981;     /* Success state (emerald-500) */
+  --success-bg:    #d1fae5;     /* Success background (emerald-100) */
+  --success-text:  #047857;     /* Success text (emerald-700) */
+  
+  --danger:        #ef4444;     /* Danger/error state (rose-500) */
+  --danger-bg:     #ffe4e6;     /* Danger background (rose-100) */
+  --danger-text:   #be123c;     /* Danger text (rose-700) */
+  
+  --warning:       #f59e0b;     /* Warning state (amber-500) */
+  --warning-bg:    #fef3c7;     /* Warning background (amber-100) */
+  --warning-text:  #b45309;     /* Warning text (amber-700) */
+
+  --info:          #3b82f6;     /* Info state (blue-500) */
+  --info-bg:       #dbeafe;     /* Info background (blue-100) */
+  --info-text:     #1e40af;     /* Info text (blue-700) */
+
+  /* Borders */
+  --border:        #e2e8f0;     /* Border color (slate-200) */
+  --border-light:  #f1f5f9;     /* Light border (slate-100) */
+  --border-focus:  #3b82f6;     /* Focus ring (blue-500) */
+
+  /* Shadows */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow:     0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* --- 2. DARK THEME OVERRIDES --- */
+.dark {
+  /* Backgrounds */
+  --background: #000000;        /* Main app background (black) */
+  --surface:    #0f172a;        /* Cards, Sidebar, Modals (slate-900) */
+  --surface-alt: #1e293b;       /* Hover states, active items (slate-800) */
+  --surface-hover: #334155;     /* Subtle hover (slate-700) */
+
+  /* Typography */
+  --text-primary:   #f8fafc;    /* Headings (slate-100) */
+  --text-secondary: #94a3b8;    /* Body text (slate-400) */
+  --text-tertiary:  #475569;    /* Placeholders, disabled (slate-600) */
+  --text-inverse:   #020617;    /* Text on light buttons (slate-950) */
+
+  /* Brand / Actions */
+  --primary:       #f8fafc;     /* Inverted for contrast (slate-100) */
+  --primary-hover: #e2e8f0;     /* Primary hover (slate-200) */
+
+  --secondary:       #1e293b;   /* Secondary buttons (slate-800) */
+  --secondary-hover: #334155;   /* Secondary hover (slate-700) */
+
+  --accent:       #6366f1;      /* Links, highlights (indigo-500) */
+  --accent-hover: #818cf8;      /* Accent hover (indigo-400) */
+  --accent-light: #312e81;      /* Accent background dark (indigo-900/20) */
+
+  /* Status Colors */
+  --success:       #10b981;     /* Success state (emerald-500) */
+  --success-bg:    #064e3b;     /* Success background dark (emerald-900/30) */
+  --success-text:  #34d399;     /* Success text (emerald-400) */
+  
+  --danger:        #ef4444;     /* Danger/error state (rose-500) */
+  --danger-bg:     #881337;     /* Danger background dark (rose-900/30) */
+  --danger-text:   #fb7185;     /* Danger text (rose-400) */
+  
+  --warning:       #f59e0b;     /* Warning state (amber-500) */
+  --warning-bg:    #78350f;     /* Warning background dark (amber-900/30) */
+  --warning-text:  #fbbf24;     /* Warning text (amber-400) */
+
+  --info:          #3b82f6;     /* Info state (blue-500) */
+  --info-bg:       #1e3a8a;     /* Info background dark (blue-900/30) */
+  --info-text:     #60a5fa;     /* Info text (blue-400) */
+
+  /* Borders */
+  --border:        #1e293b;     /* Border color (slate-800) */
+  --border-light:  #334155;     /* Light border (slate-700) */
+  --border-focus:  #3b82f6;     /* Focus ring (blue-500) */
+
+  /* Shadows */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.15);
+  --shadow:     0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-lg:  0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+}

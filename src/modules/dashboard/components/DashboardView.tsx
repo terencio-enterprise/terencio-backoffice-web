@@ -1,11 +1,15 @@
-import React from "react";
-import { CreditCard, Package, Users, BarChart3, Download, Plus } from "lucide-react";
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
-} from "recharts";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { BarChart3, CreditCard, Download, Package, Plus, Users } from "lucide-react";
+import {
+    Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis, YAxis
+} from "recharts";
 
 const SALES_DATA = [
   { name: "Mon", sales: 4000, orders: 240 },
@@ -30,13 +34,13 @@ export default function DashboardView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">System Overview</h2>
-          <p className="text-slate-500">Real-time performance across all retail branches.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Real-time performance across all retail branches.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-hover)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--surface)'}>
             <Download className="w-4 h-4" /> Export
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors" style={{ backgroundColor: 'var(--accent)', color: 'var(--text-inverse)' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-hover)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--accent)'}>
             <Plus className="w-4 h-4" /> New Report
           </button>
         </div>
@@ -45,21 +49,21 @@ export default function DashboardView() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Revenue", value: "$128,430", trend: "+12.5%", icon: CreditCard, color: "text-indigo-600" },
-          { label: "Active Orders", value: "1,240", trend: "+4.3%", icon: Package, color: "text-emerald-600" },
-          { label: "Staff on Duty", value: "42", trend: "0%", icon: Users, color: "text-blue-600" },
-          { label: "Avg. Transaction", value: "$48.20", trend: "-2.1%", icon: BarChart3, color: "text-amber-600" },
+          { label: "Total Revenue", value: "$128,430", trend: "+12.5%", icon: CreditCard, colorVar: "--accent" },
+          { label: "Active Orders", value: "1,240", trend: "+4.3%", icon: Package, colorVar: "--success" },
+          { label: "Staff on Duty", value: "42", trend: "0%", icon: Users, colorVar: "--info" },
+          { label: "Avg. Transaction", value: "$48.20", trend: "-2.1%", icon: BarChart3, colorVar: "--warning" },
         ].map((stat, i) => (
           <Card key={i} className="p-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{stat.label}</p>
                 <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                <p className={cn("text-xs mt-1 font-medium", stat.trend.startsWith("+") ? "text-emerald-600" : stat.trend === "0%" ? "text-slate-400" : "text-rose-600")}>
-                  {stat.trend} <span className="text-slate-400 font-normal">vs last month</span>
+                <p className="text-xs mt-1 font-medium" style={{ color: stat.trend.startsWith("+") ? "var(--success-text)" : stat.trend === "0%" ? "var(--text-tertiary)" : "var(--danger-text)" }}>
+                  {stat.trend} <span className="font-normal" style={{ color: 'var(--text-tertiary)' }}>vs last month</span>
                 </p>
               </div>
-              <div className={cn("p-2 rounded-lg bg-slate-50 dark:bg-slate-800", stat.color)}>
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--surface-alt)', color: `var(${stat.colorVar})` }}>
                 <stat.icon className="w-5 h-5" />
               </div>
             </div>
@@ -72,7 +76,7 @@ export default function DashboardView() {
         <Card className="lg:col-span-2 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-lg">Sales Performance</h3>
-            <select className="text-sm border-none bg-slate-50 dark:bg-slate-800 rounded-md px-2 py-1 outline-none">
+            <select className="text-sm border-none rounded-md px-2 py-1 outline-none" style={{ backgroundColor: 'var(--surface-alt)' }}>
               <option>Last 7 Days</option>
               <option>Last 30 Days</option>
             </select>
@@ -86,9 +90,9 @@ export default function DashboardView() {
                     <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: "#64748b"}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: "#64748b"}} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: "var(--text-secondary)"}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: "var(--text-secondary)"}} />
                 <Tooltip />
                 <Area type="monotone" dataKey="sales" stroke="#4f46e5" fillOpacity={1} fill="url(#colorSales)" strokeWidth={2} />
               </AreaChart>
@@ -100,19 +104,19 @@ export default function DashboardView() {
           <h3 className="font-semibold text-lg mb-4">POS Device Status</h3>
           <div className="space-y-4">
             {POS_DEVICES.map((device) => (
-              <div key={device.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+              <div key={device.id} className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: 'var(--border-light)' }}>
                 <div className="flex items-center gap-3">
-                  <div className={cn("w-2 h-2 rounded-full", device.status === "Online" ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
+                  <div className={cn("w-2 h-2 rounded-full", device.status === "Online" ? "animate-pulse" : "")} style={{ backgroundColor: device.status === "Online" ? "var(--success)" : "var(--text-tertiary)" }} />
                   <div>
                     <p className="text-sm font-medium">{device.location}</p>
-                    <p className="text-xs text-slate-500">{device.id} • {device.version}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{device.id} • {device.version}</p>
                   </div>
                 </div>
                 <Badge variant={device.status === "Online" ? "success" : "default"}>{device.status}</Badge>
               </div>
             ))}
           </div>
-          <button className="w-full mt-6 py-2 text-sm text-indigo-600 font-medium hover:underline">View All Devices</button>
+          <button className="w-full mt-6 py-2 text-sm font-medium hover:underline" style={{ color: 'var(--accent)' }}>View All Devices</button>
         </Card>
       </div>
     </div>
