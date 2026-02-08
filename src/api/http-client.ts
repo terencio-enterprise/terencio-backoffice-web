@@ -1,4 +1,5 @@
-﻿import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+﻿import axios from 'axios';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { AppConfig } from '../config/app.config';
 
 /**
@@ -28,7 +29,7 @@ class HttpClient {
       (config) => {
         const token = localStorage.getItem(AppConfig.TOKEN_STORAGE_KEY);
         if (token && config.headers) {
-          config.headers[AppConfig.AUTH_HEADER_KEY] = \Bearer \\;
+          config.headers[AppConfig.AUTH_HEADER_KEY] = `Bearer ${token}`;
         }
         return config;
       },
@@ -52,15 +53,15 @@ class HttpClient {
     return this.api.get<T>(url, config).then(r => r.data);
   }
 
-  public post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     return this.api.post<T>(url, data, config).then(r => r.data);
   }
 
-  public put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     return this.api.put<T>(url, data, config).then(r => r.data);
   }
 
-  public patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     return this.api.patch<T>(url, data, config).then(r => r.data);
   }
 
