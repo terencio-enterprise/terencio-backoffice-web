@@ -15,7 +15,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const userData = await AuthService.getCurrentUser();
       setUser(userData);
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -26,9 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await AuthService.login(credentials);
-      await checkAuth(); // Fetch full user details after successful login
-    } catch (error) {
-      throw error;
+      await checkAuth();
     } finally {
       setIsLoading(false);
     }

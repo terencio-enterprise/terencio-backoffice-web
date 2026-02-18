@@ -26,14 +26,14 @@
   --secondary:       #e2e8f0;   /* Secondary buttons (slate-200) */
   --secondary-hover: #cbd5e1;   /* Secondary hover (slate-300) */
 
-  --accent:       #4f46e5;      /* Links, highlights (indigo-600) */
-  --accent-hover: #4338ca;      /* Accent hover (indigo-700) */
-  --accent-light: #eef2ff;      /* Accent background (indigo-50) */
+  --accent:       #168f43;      /* Main Brand Green */
+  --accent-hover: #147a3b;      /* Darker Green for hover */
+  --accent-light: #dcfce7;      /* Light Green background */
 
   /* Status Colors */
-  --success:       #10b981;     /* Success state (emerald-500) */
-  --success-bg:    #d1fae5;     /* Success background (emerald-100) */
-  --success-text:  #047857;     /* Success text (emerald-700) */
+  --success:       #168f43;     /* Unified with Brand Green */
+  --success-bg:    #dcfce7;     
+  --success-text:  #14532d;     
   
   --danger:        #ef4444;     /* Danger/error state (rose-500) */
   --danger-bg:     #ffe4e6;     /* Danger background (rose-100) */
@@ -50,7 +50,7 @@
   /* Borders */
   --border:        #e2e8f0;     /* Border color (slate-200) */
   --border-light:  #f1f5f9;     /* Light border (slate-100) */
-  --border-focus:  #3b82f6;     /* Focus ring (blue-500) */
+  --border-focus:  #168f43;     /* Focus ring (Brand Green) */
 
   /* Shadows */
   --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -60,7 +60,7 @@
 
 /* --- 2. DARK THEME OVERRIDES --- */
 .dark {
-  /* Backgrounds */
+  /* ... existing backgrounds ... */
   --background: #0a0e1a;        /* Main app background (deep navy) */
   --surface:    #111827;        /* Cards, Sidebar, Modals (gray-900) */
   --surface-alt: #1f2937;       /* Hover states, active items (gray-800) */
@@ -79,13 +79,13 @@
   --secondary:       #1f2937;   /* Secondary buttons (gray-800) */
   --secondary-hover: #374151;   /* Secondary hover (gray-700) */
 
-  --accent:       #10b981;      /* Links, highlights (electric green-500) */
-  --accent-hover: #34d399;      /* Accent hover (electric green-400) */
-  --accent-light: #064e3b;      /* Accent background dark (emerald-900) */
+  --accent:       #168f43;      /* Brand Green */
+  --accent-hover: #22c55e;      /* Brighter Green for Dark Mode Hover */
+  --accent-light: #052e16;      /* Dark Green background */
 
   /* Status Colors */
   --success:       #22c55e;     /* Success state (green-500) */
-  --success-bg:    #14532d;     /* Success background dark (green-900) */
+  --success-bg:    #052e16;     /* Success background dark */
   --success-text:  #4ade80;     /* Success text (green-400) */
   
   --danger:        #f43f5e;     /* Danger/error state (rose-500) */
@@ -103,7 +103,7 @@
   /* Borders */
   --border:        #374151;     /* Border color (gray-700) */
   --border-light:  #4b5563;     /* Light border (gray-600) */
-  --border-focus:  #10b981;     /* Focus ring (electric green-500) */
+  --border-focus:  #168f43;     /* Focus ring (Brand Green) */
 
   /* Shadows */
   --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.15);

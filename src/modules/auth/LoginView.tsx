@@ -1,17 +1,24 @@
 import { AlertCircle, Eye, EyeOff, Lock, Store, User } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function LoginView() {
   const { t } = useTranslation();
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +33,6 @@ export default function LoginView() {
       await login({ username, password });
       navigate('/dashboard');
     } catch (err: unknown) {
-      // Axios error structure
       const error = err as { response?: { data?: { message?: string } } };
       setError(error?.response?.data?.message || t('auth.invalidCredentials'));
     }

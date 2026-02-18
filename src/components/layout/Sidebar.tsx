@@ -72,7 +72,7 @@ export function Sidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
             <User className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{user?.username || 'User'}</p>
+            <p className="text-sm font-semibold truncate">{user?.fullName || user?.username || 'User'}</p>
             <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{user?.role || 'Role'}</p>
           </div>
           <button 

@@ -1,10 +1,10 @@
 ﻿import { apiClient } from '../api/http-client';
-import type { ApiResponse, Employee, LoginRequest, LoginResponse } from '../types';
+import type { Employee, LoginRequest, LoginResponse } from '../types';
 
 export const AuthService = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<ApiResponse<LoginResponse>>('/api/v1/auth/login', credentials);
-    return response.data;
+    const response = await apiClient.post<LoginResponse>('/api/v1/auth/login', credentials);
+    return response;
   },
 
   logout: async () => {
@@ -16,7 +16,7 @@ export const AuthService = {
   },
 
   getCurrentUser: async (): Promise<Employee> => {
-    const response = await apiClient.get<ApiResponse<Employee>>('/api/v1/auth/me');
-    return response.data;
+    const response = await apiClient.get<Employee>('/api/v1/auth/me');
+    return response;
   }
 };
