@@ -1,6 +1,7 @@
-import { Bell, ChevronDown, ChevronRight, Moon, Search, Sun } from "lucide-react";
+import { Bell, ChevronRight, Moon, Search, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
+import { StoreSwitcher } from "./StoreSwitcher";
 
 interface TopbarProps {
   isDarkMode: boolean;
@@ -10,7 +11,7 @@ interface TopbarProps {
 export function Topbar({ isDarkMode, setIsDarkMode }: TopbarProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const moduleName = location.pathname.split('/')[1] || 'dashboard';
+  const moduleName = location.pathname.split('/').filter(Boolean).pop() || 'overview';
   
   const toggleLanguage = () => {
     const newLang = i18n.language === 'es' ? 'en' : 'es';
@@ -63,12 +64,10 @@ export function Topbar({ isDarkMode, setIsDarkMode }: TopbarProps) {
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full border-2" style={{ backgroundColor: 'var(--danger)', borderColor: 'var(--surface)' }}></span>
         </button>
         <div className="h-8 w-[1px] mx-2 hidden sm:block" style={{ backgroundColor: 'var(--border)' }}></div>
-        <div className="hidden sm:flex items-center gap-2 cursor-pointer p-1.5 rounded-lg transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-hover)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-          <div className="text-right">
-            <p className="text-xs font-bold leading-none">{t('topbar.mainStore')}</p>
-            <p className="text-[10px] font-medium leading-none mt-1" style={{ color: 'var(--success)' }}>{t('topbar.statusOpen')}</p>
-          </div>
-          <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+        
+        {/* Store Switcher */}
+        <div className="hidden sm:block">
+          <StoreSwitcher />
         </div>
       </div>
     </header>

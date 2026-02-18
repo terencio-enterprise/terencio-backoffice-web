@@ -1,8 +1,10 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveContext } from "@/hooks/useScope";
 import { cn } from "@/lib/utils";
 import { LogOut, Store, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ScopeSelector } from "./ScopeSelector";
 
 interface MenuItem {
   id: string;
@@ -22,6 +24,33 @@ export function Sidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { companySlug, storeSlug } = useActiveContext();
+  
+  const buildPath = (basePath: string) => {
+    if (!companySlug) return basePath;
+    
+    if (storeSlug) {
+      return `/${companySlug}/${storeSlug}${basePath}`;
+    } else {
+      return `/${companySlug}${basePath}`;
+    }
+  };
+
+  const isPathActive = (basePath: string) => {
+    // Handle empty path (overview/home)
+    if (basePath === '') {
+      // Check if we're at the root company or store level
+      const pathParts = location.pathname.split('/').filter(Boolean);
+      if (storeSlug) {
+        return pathParts.length === 2 && pathParts[0] === companySlug && pathParts[1] === storeSlug;
+      } else {
+        return pathParts.length === 1 && pathParts[0] === companySlug;
+      }
+    }
+    
+    // For other paths, check if pathname ends with the path
+    return location.pathname.endsWith(basePath);
+  };
   
   return (
     <aside className={cn(
@@ -38,20 +67,24 @@ export function Sidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
         </div>
       </div>
 
+      {/* Scope Selector */}
+      <div className="px-4 mb-4">
+        <ScopeSelector />
+      </div>
+
       <nav className="px-4 mt-4 space-y-1">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const fullPath = buildPath(item.path);
+          const isActive = isPathActive(item.path);
+          
           return (
             <button
               key={item.id}
               onClick={() => {
-                navigate(item.path);
+                navigate(fullPath);
                 if (window.innerWidth < 1024) setIsOpen(false);
               }}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer noSelect",
-                isActive ? "" : ""
-              )}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer noSelect"
               style={isActive
                 ? { backgroundColor: 'var(--accent-light)', color: 'var(--accent)' } 
                 : { color: 'var(--text-secondary)' }}
@@ -73,7 +106,7 @@ export function Sidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate">{user?.fullName || user?.username || 'User'}</p>
-            <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{user?.role || 'Role'}</p>
+            <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>Company Admin</p>
           </div>
           <button 
             onClick={logout}
