@@ -1,22 +1,22 @@
 ﻿import { apiClient } from '../api/http-client';
-import { AppConfig } from '../config/app.config';
-import type { LoginRequest, LoginResponse } from '../types';
+import type { ApiResponse, Employee, LoginRequest, LoginResponse } from '../types';
 
 export const AuthService = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/api/v1/auth/login', credentials);
-    if (response.token) {
-      localStorage.setItem(AppConfig.TOKEN_STORAGE_KEY, response.token);
+    const response = await apiClient.post<ApiResponse<LoginResponse>>('/api/v1/auth/login', credentials);
+    return response.data;
+  },
+
+  logout: async () => {
+    try {
+      await apiClient.post('/api/v1/auth/logout', {});
+    } finally {
+      window.location.href = '/login';
     }
-    return response;
   },
 
-  logout: () => {
-    localStorage.removeItem(AppConfig.TOKEN_STORAGE_KEY);
-    window.location.reload();
-  },
-
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem(AppConfig.TOKEN_STORAGE_KEY);
+  getCurrentUser: async (): Promise<Employee> => {
+    const response = await apiClient.get<ApiResponse<Employee>>('/api/v1/auth/me');
+    return response.data;
   }
 };

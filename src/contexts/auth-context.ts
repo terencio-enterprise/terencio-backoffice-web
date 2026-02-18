@@ -1,8 +1,8 @@
 import { createContext } from 'react';
-import type { LoginRequest, LoginResponse } from '../types';
+import type { Employee, LoginRequest } from '../types';
 
 export interface AuthContextType {
-  user: LoginResponse | null;
+  user: Employee | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginRequest) => Promise<void>;

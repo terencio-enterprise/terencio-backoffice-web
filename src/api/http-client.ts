@@ -1,11 +1,11 @@
-﻿import axios from 'axios';
-import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+﻿import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { AppConfig } from '../config/app.config';
 
 /**
  * Enterprise Grade HTTP Client
  * - Singleton instance
- * - Auth Token Injection
+ * - Auth Token Injection (via Cookies)
  * - Standardized Error Handling
  */
 class HttpClient {
@@ -18,25 +18,15 @@ class HttpClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: true,
     });
 
     this.initializeInterceptors();
   }
 
   private initializeInterceptors() {
-    // Request: Inject Bearer Token
-    this.api.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem(AppConfig.TOKEN_STORAGE_KEY);
-        if (token && config.headers) {
-          config.headers[AppConfig.AUTH_HEADER_KEY] = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
     // Response: Handle Global Errors
+    // Request interceptor not needed for cookies (handled by browser)
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {

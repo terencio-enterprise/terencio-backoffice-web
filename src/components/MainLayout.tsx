@@ -1,14 +1,8 @@
+
 import {
-    BarChart3,
-    CreditCard,
-    LayoutDashboard,
-    Menu,
-    Package,
-    Settings,
-    Smartphone,
-    Store,
-    Users,
-    X
+  LayoutDashboard,
+  Menu,
+  X
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -36,13 +30,6 @@ export function MainLayout() {
 
   const menuItems = [
     { id: "dashboard", label: t('menu.dashboard'), icon: LayoutDashboard, path: "/dashboard" },
-    { id: "devices", label: t('menu.devices'), icon: Smartphone, path: "/devices" },
-    { id: "stores", label: t('menu.stores'), icon: Store, path: "/stores" },
-    { id: "inventory", label: t('menu.inventory'), icon: Package, path: "/inventory" },
-    { id: "employees", label: t('menu.employees'), icon: Users, path: "/employees" },
-    { id: "sales", label: t('menu.sales'), icon: CreditCard, path: "/sales" },
-    { id: "analytics", label: t('menu.analytics'), icon: BarChart3, path: "/analytics" },
-    { id: "settings", label: t('menu.settings'), icon: Settings, path: "/settings" },
   ];
 
   return (
@@ -53,7 +40,7 @@ export function MainLayout() {
         <div className="lg:hidden flex items-center justify-between p-4 border-b noSelect" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: 'var(--accent)' }}>
-              <Store className="w-5 h-5" style={{ color: 'var(--text-inverse)' }} />
+              <LayoutDashboard className="w-5 h-5" style={{ color: 'var(--text-inverse)' }} />
             </div>
             <span className="font-bold text-lg">Terencio</span>
           </div>

@@ -26,6 +26,7 @@ export default function LoginView() {
       await login({ username, password });
       navigate('/dashboard');
     } catch (err: unknown) {
+      // Axios error structure
       const error = err as { response?: { data?: { message?: string } } };
       setError(error?.response?.data?.message || t('auth.invalidCredentials'));
     }

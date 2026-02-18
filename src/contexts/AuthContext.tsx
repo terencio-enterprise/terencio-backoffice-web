@@ -1,44 +1,42 @@
 import { useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
-import type { LoginRequest, LoginResponse } from '../types';
+import type { Employee, LoginRequest } from '../types';
 import { AuthContext } from './auth-context';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<LoginResponse | null>(null);
+  const [user, setUser] = useState<Employee | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkAuth = () => {
-      const isAuth = AuthService.isAuthenticated();
-      if (isAuth) {
-        // Load user data from localStorage if available
-        const savedUser = localStorage.getItem('terencio_user');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
-      }
-      setIsLoading(false);
-    };
-
     checkAuth();
   }, []);
 
-  const login = async (credentials: LoginRequest) => {
-    setIsLoading(true);
+  const checkAuth = async () => {
     try {
-      const response = await AuthService.login(credentials);
-      setUser(response);
-      localStorage.setItem('terencio_user', JSON.stringify(response));
+      const userData = await AuthService.getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const login = async (credentials: LoginRequest) => {
+    setIsLoading(true);
+    try {
+      await AuthService.login(credentials);
+      await checkAuth(); // Fetch full user details after successful login
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
     setUser(null);
-    localStorage.removeItem('terencio_user');
-    AuthService.logout();
+    await AuthService.logout();
   };
 
   return (
