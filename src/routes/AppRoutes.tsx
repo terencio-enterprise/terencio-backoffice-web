@@ -1,3 +1,4 @@
+import MarketingModule from '@/modules/marketing/MarktingPage';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout';
 import { PlaceholderPage } from '../components/layout/PlaceholderPage';
@@ -6,6 +7,7 @@ import { ScopedView } from '../components/layout/ScopedView';
 import { LoginPage } from '../modules/auth/LoginPage';
 import { CompanyPage } from '../modules/company/CompanyPage';
 import { StorePage } from '../modules/store/StorePage';
+
 
 export function AppRoutes() {
   return (
@@ -24,7 +26,7 @@ export function AppRoutes() {
         
         <Route path="/:companySlug/marketing" element={
           <ScopedView requiresCompany>
-            <PlaceholderPage module="Marketing" />
+            <MarketingModule />
           </ScopedView>
         } />
 
