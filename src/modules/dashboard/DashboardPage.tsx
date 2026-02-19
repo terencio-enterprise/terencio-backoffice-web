@@ -4,7 +4,7 @@ import { PosStatusList } from "./PosStatusList";
 import { SalesChart } from "./SalesChart";
 import { StatsGrid } from "./StatsGrid";
 
-export default function DashboardView() {
+export function DashboardPage() {
   const { t } = useTranslation();
   
   return (

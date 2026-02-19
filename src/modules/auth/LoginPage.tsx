@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
-export default function LoginView() {
+export function LoginPage() {
   const { t } = useTranslation();
   const { login, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import { useScope } from "@/hooks/useScope";
 import { cn } from "@/lib/utils";
-import type { StoreDto } from "@/types/models";
+import type { StoreDto } from "@/types/entities";
 import { Building2, ChevronDown, MapPin } from "lucide-react";
 import { useState } from "react";
 

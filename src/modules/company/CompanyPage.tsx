@@ -1,13 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { useActiveContext, useScope } from "@/hooks/useScope";
+import type { StoreDto } from "@/types/entities";
 import { Building2, MapPin, Store, TrendingUp, Users } from "lucide-react";
 
-export function CompanyView() {
+export function CompanyPage() {
   const { companyName } = useActiveContext();
   const { activeCompany, switchStore } = useScope();
 
   const handleStoreClick = (storeId: string) => {
-    const store = activeCompany?.stores.find(s => s.id === storeId);
+    const store = activeCompany?.stores.find((s: StoreDto) => s.id === storeId);
     if (store) {
       switchStore(store);
     }
@@ -76,17 +77,17 @@ export function CompanyView() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeCompany?.stores.map((store) => (
+          {activeCompany?.stores.map((store: StoreDto) => (
             <Card
               key={store.id}
               className="p-6 cursor-pointer transition-all hover:shadow-lg"
               style={{ borderColor: 'var(--border)' }}
               onClick={() => handleStoreClick(store.id)}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
                 e.currentTarget.style.borderColor = 'var(--accent)';
                 e.currentTarget.style.transform = 'translateY(-2px)';
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
                 e.currentTarget.style.borderColor = 'var(--border)';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}

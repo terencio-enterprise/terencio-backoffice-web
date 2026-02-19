@@ -11,7 +11,7 @@ import {
     Users
 } from "lucide-react";
 
-export function StoreView() {
+export function StorePage() {
   const { companyName, storeName } = useActiveContext();
 
   return (

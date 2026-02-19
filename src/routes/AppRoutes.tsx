@@ -1,79 +1,79 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ComingSoonView } from '../components/ComingSoonView';
-import { MainLayout } from '../components/MainLayout';
-import { ProtectedRoute } from '../components/ProtectedRoute';
+import { MainLayout } from '../components/layout/MainLayout';
+import { PlaceholderPage } from '../components/layout/PlaceholderPage';
+import { ProtectedRoute } from '../components/layout/ProtectedRoute';
 import { ScopedView } from '../components/layout/ScopedView';
-import LoginView from '../modules/auth/LoginView';
-import { CompanyView } from '../modules/company/CompanyView';
-import { StoreView } from '../modules/store/StoreView';
+import { LoginPage } from '../modules/auth/LoginPage';
+import { CompanyPage } from '../modules/company/CompanyPage';
+import { StorePage } from '../modules/store/StorePage';
 
 export function AppRoutes() {
   return (
     <Routes>
       {/* Login Route - Public */}
-      <Route path="/login" element={<LoginView />} />
+      <Route path="/login" element={<LoginPage />} />
       
       {/* Protected Routes with Hierarchical Slugs */}
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         {/* Company-level routes: /:companySlug */}
         <Route path="/:companySlug" element={
           <ScopedView requiresCompany>
-            <CompanyView />
+            <CompanyPage />
           </ScopedView>
         } />
         
         <Route path="/:companySlug/marketing" element={
           <ScopedView requiresCompany>
-            <ComingSoonView module="Marketing" />
+            <PlaceholderPage module="Marketing" />
           </ScopedView>
         } />
 
         <Route path="/:companySlug/inventory" element={
           <ScopedView requiresCompany>
-            <ComingSoonView module="Company Inventory" />
+            <PlaceholderPage module="Company Inventory" />
           </ScopedView>
         } />
 
         <Route path="/:companySlug/reports" element={
           <ScopedView requiresCompany>
-            <ComingSoonView module="Company Reports" />
+            <PlaceholderPage module="Company Reports" />
           </ScopedView>
         } />
 
         <Route path="/:companySlug/settings" element={
           <ScopedView requiresCompany>
-            <ComingSoonView module="Company Settings" />
+            <PlaceholderPage module="Company Settings" />
           </ScopedView>
         } />
         
         {/* Store-level routes: /:companySlug/:storeSlug */}
         <Route path="/:companySlug/:storeSlug" element={
           <ScopedView requiresStore>
-            <StoreView />
+            <StorePage />
           </ScopedView>
         } />
 
         <Route path="/:companySlug/:storeSlug/pos" element={
           <ScopedView requiresStore>
-            <ComingSoonView module="Point of Sale" />
+            <PlaceholderPage module="Point of Sale" />
           </ScopedView>
         } />
 
         <Route path="/:companySlug/:storeSlug/inventory" element={
           <ScopedView requiresStore>
-            <ComingSoonView module="Inventory" />
+            <PlaceholderPage module="Inventory" />
           </ScopedView>
         } />
 
         <Route path="/:companySlug/:storeSlug/reports" element={
           <ScopedView requiresStore>
-            <ComingSoonView module="Store Reports" />
+            <PlaceholderPage module="Store Reports" />
           </ScopedView>
         } />
 
         <Route path="/:companySlug/:storeSlug/settings" element={
           <ScopedView requiresStore>
-            <ComingSoonView module="Store Settings" />
+            <PlaceholderPage module="Store Settings" />
           </ScopedView>
         } />
       </Route>

@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { CompanyTreeDto, EmployeeInfoDto, StoreDto } from '../types/models';
+import type { CompanyTreeDto, EmployeeInfoDto, StoreDto } from '../types/entities';
 
 interface ScopeContextValue {
   activeCompany: CompanyTreeDto | null;

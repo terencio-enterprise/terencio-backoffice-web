@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useScope } from "@/hooks/useScope";
 import { cn } from "@/lib/utils";
-import type { CompanyTreeDto } from "@/types/models";
+import type { CompanyTreeDto } from "@/types/entities";
 import { Building2, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
@@ -57,7 +57,7 @@ export function ScopeSelector() {
             style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
           >
             {/* Company List */}
-            {user?.companies?.map(company => {
+            {user?.companies?.map((company: CompanyTreeDto) => {
               const isActiveCompany = activeCompany?.id === company.id;
 
               return (

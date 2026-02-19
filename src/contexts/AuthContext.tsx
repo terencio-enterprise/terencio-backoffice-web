@@ -1,7 +1,17 @@
-import { useEffect, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
-import type { Employee, LoginRequest } from '../types';
-import { AuthContext } from './auth-context';
+import type { LoginRequest } from '../types/auth';
+import type { Employee } from '../types/entities';
+
+export interface AuthContextType {
+  user: Employee | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (credentials: LoginRequest) => Promise<void>;
+  logout: () => void;
+}
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Employee | null>(null);

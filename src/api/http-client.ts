@@ -1,7 +1,7 @@
 ﻿import type { AxiosInstance, AxiosRequestConfig } from 'axios';
 import axios, { AxiosError } from 'axios';
 import { AppConfig } from '../config/app.config';
-import type { ApiResponse } from '../types';
+import type { ApiResponse } from '../types/api';
 
 /**
  * Enterprise Grade HTTP Client
