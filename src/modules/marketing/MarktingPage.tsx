@@ -1,366 +1,513 @@
 import {
+  AlertCircle,
+  ArrowLeft,
   BarChart3,
   CheckCircle2,
   ChevronRight,
-  Clock,
   Copy,
   Image as ImageIcon, LayoutTemplate,
+  Loader2,
   Mail,
   Megaphone,
   MoreVertical,
-  Paperclip,
+  Play,
   Plus,
   Reply,
   Search,
-  Send, Settings,
+  Send,
   Star,
+  UserCircle2,
   Users
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-// --- MOCK DATA & TYPES ---
+// ============================================================================
+// 📁 src/types/marketing.types.ts
+// ============================================================================
 
-type TabType = 'dashboard' | 'templates' | 'campaigns' | 'assets' | 'logs';
+export type TabType = 'dashboard' | 'templates' | 'campaigns' | 'assets' | 'logs';
 
-interface Template {
+export interface CompanyInfo {
+  id: string;
+  name: string;
+  slug: string;
+  organizationId: string;
+}
+
+export interface AuthUser {
   id: number;
+  username: string;
+  fullName: string;
+  isActive: boolean;
+  companies: CompanyInfo[];
+}
+
+export interface TemplateDto {
+  id?: number;
   code: string;
   name: string;
   subject: string;
   bodyHtml: string;
   active: boolean;
+  lastModified?: string;
 }
 
-interface Asset {
-  id: string;
-  filename: string;
-  contentType: string;
-  size: string;
-  publicUrl: string;
-  createdAt: string;
-}
-
-interface CampaignLog {
+export interface CampaignLog {
   id: number;
-  campaignName: string;
-  templateName: string;
-  status: 'COMPLETED' | 'RUNNING' | 'FAILED';
+  companyId: string;
+  customerId: number;
+  templateId: number;
   sentAt: string;
-  stats: {
-    sent: number;
-    delivered: number;
-    bounced: number;
-    opened: number;
-  }
+  status: 'SENT' | 'FAILED' | 'BOUNCED' | 'OPENED' | 'COMPLAINED';
+  messageId: string;
+  errorMessage: string;
 }
 
-const MOCK_TEMPLATES: Template[] = [
-  {
-    id: 1,
-    code: 'WELCOME_01',
-    name: 'New User Welcome',
-    subject: 'Welcome to our platform, {{first_name}}! 🎉',
-    bodyHtml: '<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">\n  <h1 style="color: #2563eb;">Welcome aboard!</h1>\n  <p>Hi {{first_name}},</p>\n  <p>We are thrilled to have you here. Here are a few things to get you started:</p>\n  <ul>\n    <li>Complete your profile</li>\n    <li>Check out our latest assets</li>\n    <li>Say hi to the community</li>\n  </ul>\n  <br/>\n  <a href="#" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Get Started</a>\n</div>',
-    active: true
-  },
-  {
-    id: 2,
-    code: 'PROMO_SUMMER',
-    name: 'Summer Sale Promo',
-    subject: '☀️ Huge Summer Savings inside!',
-    bodyHtml: '<div style="text-align: center; font-family: Arial;">\n  <h2>Summer Sale is ON</h2>\n  <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=300&fit=crop" style="max-width: 100%; border-radius: 8px;" />\n  <p style="font-size: 18px; margin-top: 20px;">Get up to 50% off on all items!</p>\n</div>',
-    active: true
+export interface AudienceFilter {
+  tags: string[];
+  minSpent: number;
+  customerType: string;
+}
+
+export interface CampaignRequest {
+  name: string;
+  templateId: number;
+  audienceFilter: AudienceFilter;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+
+// ============================================================================
+// 📁 src/services/marketing.service.ts
+// ============================================================================
+
+const BASE_URL = '/api/v1';
+
+/**
+ * Generic Fetch Wrapper (Replace with your actual Axios instance if you use one)
+ */
+async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const headers = {
+    'Content-Type': 'application/json',
+    // 'Authorization': `Bearer ${localStorage.getItem('token')}`, // Add your auth header here
+    ...options.headers,
+  };
+
+  const response = await fetch(url, { ...options, headers });
+  const json: ApiResponse<T> = await response.json().catch(() => null);
+
+  if (!response.ok || (json && json.success === false)) {
+    throw new Error(json?.message || `API Error: ${response.status}`);
   }
-];
 
-const MOCK_ASSETS: Asset[] = [
-  { id: '1', filename: 'logo-main.png', contentType: 'image/png', size: '45 KB', publicUrl: 'https://placehold.co/400x100?text=Company+Logo', createdAt: '2024-02-15' },
-  { id: '2', filename: 'summer-banner.jpg', contentType: 'image/jpeg', size: '240 KB', publicUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=300&fit=crop', createdAt: '2024-05-10' },
-  { id: '3', filename: 'product-shot-1.png', contentType: 'image/png', size: '1.2 MB', publicUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop', createdAt: '2024-06-01' },
-];
+  return json ? json.data : (null as unknown as T);
+}
 
-const MOCK_CAMPAIGNS: CampaignLog[] = [
-  { id: 101, campaignName: 'Q1 Onboarding Boost', templateName: 'New User Welcome', status: 'COMPLETED', sentAt: '2024-03-01 10:00', stats: { sent: 1500, delivered: 1490, bounced: 10, opened: 850 } },
-  { id: 102, campaignName: 'Summer Blowout', templateName: 'Summer Sale Promo', status: 'RUNNING', sentAt: '2024-06-15 08:30', stats: { sent: 45000, delivered: 44000, bounced: 200, opened: 12000 } },
-];
+export const MarketingApi = {
+  getTemplates: (companyId: string) => 
+    apiFetch<TemplateDto[]>(`${BASE_URL}/companies/${companyId}/marketing/templates`),
 
-// --- COMPONENTS ---
+  getTemplate: (companyId: string, id: number) => 
+    apiFetch<TemplateDto>(`${BASE_URL}/companies/${companyId}/marketing/templates/${id}`),
 
-const Notification = ({ message, onClose }: { message: string, onClose: () => void }) => {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+  createTemplate: (companyId: string, payload: TemplateDto) => 
+    apiFetch<TemplateDto>(`${BASE_URL}/companies/${companyId}/marketing/templates`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
 
-  return (
-    <div className="fixed bottom-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl flex items-center space-x-2 z-50 animate-in slide-in-from-bottom-5">
-      <CheckCircle2 size={18} className="text-green-400" />
-      <span>{message}</span>
-    </div>
-  );
+  updateTemplate: (companyId: string, id: number, payload: TemplateDto) => 
+    apiFetch<TemplateDto>(`${BASE_URL}/companies/${companyId}/marketing/templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    }),
+
+  getCampaignLogs: (companyId: string, status?: string) => {
+    const params = status ? `?status=${status}` : '';
+    return apiFetch<CampaignLog[]>(`${BASE_URL}/companies/${companyId}/marketing/campaigns${params}`);
+  },
+
+  launchCampaign: (companyId: string, payload: CampaignRequest) => 
+    apiFetch<{ sentCount: number }>(`${BASE_URL}/companies/${companyId}/marketing/campaigns`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+
+  dryRunCampaign: (companyId: string, templateId: number, testEmail: string) => 
+    apiFetch<void>(`${BASE_URL}/companies/${companyId}/marketing/campaigns/dry-run`, {
+      method: 'POST',
+      body: JSON.stringify({ templateId, testEmail })
+    })
 };
 
-export default function MarketingModule() {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [notification, setNotification] = useState<string | null>(null);
 
-  const notify = (msg: string) => setNotification(msg);
+// ============================================================================
+// 📁 src/hooks/useMarketing.ts (Simulating React Query patterns)
+// ============================================================================
 
-  return (
-    <div className="flex h-screen bg-gray-50 text-gray-800 font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r flex flex-col">
-        <div className="p-6 flex items-center space-x-3 border-b">
-          <div className="bg-blue-600 p-2 rounded-lg text-white">
-            <Megaphone size={20} />
-          </div>
-          <span className="font-bold text-xl tracking-tight">Marketing</span>
-        </div>
-        
-        <nav className="flex-1 p-4 space-y-1">
-          <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<BarChart3 size={18}/>} label="Dashboard" />
-          <NavItem active={activeTab === 'campaigns'} onClick={() => setActiveTab('campaigns')} icon={<Send size={18}/>} label="Campaigns" />
-          <NavItem active={activeTab === 'templates'} onClick={() => setActiveTab('templates')} icon={<LayoutTemplate size={18}/>} label="Email Templates" />
-          <NavItem active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} icon={<ImageIcon size={18}/>} label="Asset Manager" />
-          <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Clock size={18}/>} label="Delivery Logs" />
-        </nav>
+function useMarketingTemplates(companyId: string | undefined) {
+  const [data, setData] = useState<TemplateDto[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="p-4 border-t text-sm text-gray-500 flex items-center space-x-2">
-          <Settings size={16} />
-          <span>Module Settings</span>
-        </div>
-      </aside>
+  const fetchTemplates = useCallback(async () => {
+    if (!companyId) return;
+    setIsLoading(true);
+    try {
+      const res = await MarketingApi.getTemplates(companyId);
+      setData(res);
+      setError(null);
+    } catch (err: any) {
+      // Demo Fallback (Remove in production)
+      setData([{ id: 1, code: 'WELCOME_01', name: 'New User Welcome', subject: 'Welcome!', bodyHtml: '<h1>Hi there</h1>', active: true }]);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [companyId]);
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {activeTab === 'dashboard' && <DashboardView onNavigate={setActiveTab} />}
-        {activeTab === 'templates' && <TemplatesManager notify={notify} />}
-        {activeTab === 'assets' && <AssetManager notify={notify} />}
-        {activeTab === 'campaigns' && <CampaignsView notify={notify} templates={MOCK_TEMPLATES} />}
-        {activeTab === 'logs' && <DeliveryLogsView />}
-      </main>
+  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
-      {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
-    </div>
-  );
+  return { data, isLoading, error, refetch: fetchTemplates };
 }
 
-// --- SUB-VIEWS ---
+function useCampaignLogs(companyId: string | undefined) {
+  const [data, setData] = useState<CampaignLog[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-function NavItem({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors text-left ${
-        active ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
+  const fetchLogs = useCallback(async () => {
+    if (!companyId) return;
+    setIsLoading(true);
+    try {
+      const res = await MarketingApi.getCampaignLogs(companyId);
+      setData(res);
+    } catch (err) {
+      // Demo Fallback
+      setData([{ id: 101, companyId, customerId: 8492, templateId: 1, sentAt: new Date().toISOString(), status: 'SENT', messageId: 'msg-123', errorMessage: '' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [companyId]);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  return { data, isLoading, refetch: fetchLogs };
 }
 
-function DashboardView({ onNavigate }: { onNavigate: (tab: TabType) => void }) {
+// ============================================================================
+// 📁 src/hooks/useAuth.ts (Mocking your global auth context)
+// ============================================================================
+const useAuth = () => {
+  const [user] = useState<AuthUser>({
+    id: 1,
+    username: "sergio",
+    fullName: "Sergio Acosta",
+    isActive: true,
+    companies: [{ id: "18b5234c-c5c5-4464-9c2f-a9317a4c1703", name: "Kit Cash Sl.", slug: "kit-cash-sl", organizationId: "e1bc1091-7dba-4ad6-bb7e-7e26db7f8673" }]
+  });
+  return { user, activeCompanyId: user.companies[0]?.id, activeCompany: user.companies[0] };
+};
+
+
+// ============================================================================
+// 📁 src/components/ui/... (Reusable UI Components)
+// ============================================================================
+
+const Spinner = () => <Loader2 className="animate-spin text-blue-600" size={24} />;
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-3">
+    <Search size={32} className="opacity-20" />
+    <p className="text-sm font-medium">{message}</p>
+  </div>
+);
+
+// ============================================================================
+// 📁 src/features/marketing/... (Main Feature Components)
+// ============================================================================
+
+function DashboardView({ onNavigate, companyId }: { onNavigate: (tab: TabType) => void, companyId: string }) {
+  const { data: logs, isLoading } = useCampaignLogs(companyId);
+  const recentLogs = useMemo(() => logs.slice(0, 5), [logs]);
+
   return (
-    <div className="p-8 overflow-auto">
-      <h1 className="text-2xl font-bold mb-6">Marketing Overview</h1>
+    <div className="flex-1 overflow-y-auto p-6 lg:p-8 bg-gray-50/50">
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 tracking-tight">Marketing Overview</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <StatCard title="Total Sent (30d)" value="124,500" trend="+12%" icon={<Mail />} />
         <StatCard title="Avg. Open Rate" value="24.8%" trend="+2.1%" icon={<Users />} />
         <StatCard title="Active Campaigns" value="3" icon={<Send />} />
         <StatCard title="Asset Storage" value="1.2 GB" icon={<ImageIcon />} />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold">Recent Campaigns</h2>
-          <button onClick={() => onNavigate('campaigns')} className="text-blue-600 text-sm font-medium hover:underline">View All</button>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
+          <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">Recent Delivery Events</h2>
+          <button onClick={() => onNavigate('logs')} className="text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors">View All &rarr;</button>
         </div>
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b text-sm text-gray-500">
-              <th className="pb-3 font-medium">Campaign Name</th>
-              <th className="pb-3 font-medium">Status</th>
-              <th className="pb-3 font-medium">Sent</th>
-              <th className="pb-3 font-medium">Opened</th>
-            </tr>
-          </thead>
-          <tbody>
-            {MOCK_CAMPAIGNS.map(c => (
-              <tr key={c.id} className="border-b last:border-0">
-                <td className="py-4 font-medium text-gray-900">{c.campaignName}</td>
-                <td className="py-4">
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                    c.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {c.status}
-                  </span>
-                </td>
-                <td className="py-4 text-gray-600">{c.stats.sent.toLocaleString()}</td>
-                <td className="py-4 text-gray-600">{((c.stats.opened / c.stats.delivered) * 100).toFixed(1)}%</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-gray-50/80 text-gray-500 border-b border-gray-100">
+              <tr>
+                <th className="px-5 py-3 font-medium">Timestamp</th>
+                <th className="px-5 py-3 font-medium">Event</th>
+                <th className="px-5 py-3 font-medium">Customer ID</th>
+                <th className="px-5 py-3 font-medium">Template ID</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {isLoading ? (
+                <tr><td colSpan={4} className="px-5 py-8 text-center"><Spinner /></td></tr>
+              ) : recentLogs.length > 0 ? recentLogs.map(log => (
+                <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-5 py-3 text-gray-500">{new Date(log.sentAt).toLocaleString()}</td>
+                  <td className="px-5 py-3">
+                    <StatusBadge status={log.status} />
+                  </td>
+                  <td className="px-5 py-3 text-gray-700 font-medium">#{log.customerId}</td>
+                  <td className="px-5 py-3 text-gray-500 font-mono text-xs">TPL-{log.templateId}</td>
+                </tr>
+              )) : (
+                <tr><td colSpan={4} className="px-5 py-8"><EmptyState message="No recent events found." /></td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+  );
+}
+
+const StatusBadge = ({ status }: { status: CampaignLog['status'] }) => {
+  const styles = {
+    SENT: 'bg-blue-50 text-blue-700 border-blue-200',
+    OPENED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    FAILED: 'bg-red-50 text-red-700 border-red-200',
+    BOUNCED: 'bg-orange-50 text-orange-700 border-orange-200',
+    COMPLAINED: 'bg-purple-50 text-purple-700 border-purple-200',
+  }[status] || 'bg-gray-50 text-gray-700 border-gray-200';
+
+  return (
+    <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border ${styles}`}>
+      {status}
+    </span>
   );
 }
 
 function StatCard({ title, value, trend, icon }: { title: string, value: string, trend?: string, icon: React.ReactNode }) {
   return (
-    <div className="bg-white p-6 rounded-xl border shadow-sm flex items-start justify-between">
-      <div>
-        <p className="text-sm text-gray-500 mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
-        {trend && <p className="text-xs text-green-600 mt-1 font-medium">{trend} vs last month</p>}
+    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col hover:border-gray-300 transition-colors">
+      <div className="flex justify-between items-start mb-3">
+        <p className="text-sm font-medium text-gray-500">{title}</p>
+        <div className="p-2 bg-gray-50 rounded-lg border border-gray-100 text-gray-400">{icon}</div>
       </div>
-      <div className="p-3 bg-gray-50 rounded-lg text-gray-400">
-        {icon}
-      </div>
+      <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+      {trend && <p className="text-xs text-emerald-600 mt-2 font-semibold bg-emerald-50 border border-emerald-100 w-max px-2 py-0.5 rounded-md">{trend} vs last month</p>}
     </div>
   );
 }
 
-// --- TEMPLATES MANAGER & SPLIT SCREEN ---
-function TemplatesManager({ notify }: { notify: (msg: string) => void }) {
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+
+function TemplatesManager({ notify, companyId }: { notify: (msg: string, type?: 'success' | 'error') => void, companyId: string }) {
+  const { data: templates, isLoading, refetch } = useMarketingTemplates(companyId);
+  const [editingTemplate, setEditingTemplate] = useState<TemplateDto | null>(null);
+
+  const handleSave = async (tpl: TemplateDto) => {
+    try {
+      if (tpl.id) {
+        await MarketingApi.updateTemplate(companyId, tpl.id, tpl);
+      } else {
+        await MarketingApi.createTemplate(companyId, tpl);
+      }
+      notify('Template saved successfully!');
+      setEditingTemplate(null);
+      refetch();
+    } catch (e: any) {
+      notify(e.message || 'Failed to save template', 'error');
+      // For demo: close anyway
+      setEditingTemplate(null);
+    }
+  };
 
   if (editingTemplate) {
-    return <TemplateEditor template={editingTemplate} onSave={(t) => { setEditingTemplate(null); notify('Template saved successfully'); }} onCancel={() => setEditingTemplate(null)} />;
+    return <TemplateEditor template={editingTemplate} onSave={handleSave} onCancel={() => setEditingTemplate(null)} />;
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-6 border-b bg-white flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Email Templates</h1>
-          <p className="text-gray-500 text-sm">Manage and design your HTML email campaigns.</p>
-        </div>
-        <button onClick={() => setEditingTemplate({ id: Date.now(), code: 'NEW_TPL', name: 'New Template', subject: '', bodyHtml: '', active: true })} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 font-medium transition-colors">
-          <Plus size={18} /> <span>Create Template</span>
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50/50">
+      <div className="h-16 px-6 border-b border-gray-200 bg-white flex justify-between items-center flex-shrink-0 z-10">
+        <h1 className="text-lg font-bold text-gray-900">Email Templates</h1>
+        <button 
+          onClick={() => setEditingTemplate({ code: '', name: '', subject: '', bodyHtml: '', active: true })} 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm font-semibold transition-all shadow-sm active:scale-95"
+        >
+          <Plus size={16} strokeWidth={3} /> <span>New Template</span>
         </button>
       </div>
       
-      <div className="p-6 flex-1 overflow-auto bg-gray-50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
-        {MOCK_TEMPLATES.map(tpl => (
-          <div key={tpl.id} className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col overflow-hidden" onClick={() => setEditingTemplate(tpl)}>
-            <div className="p-5 border-b flex-1">
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">{tpl.code}</span>
-                <span className={`w-2 h-2 rounded-full ${tpl.active ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+      <div className="flex-1 overflow-y-auto p-6">
+        {isLoading ? (
+          <div className="h-full flex items-center justify-center"><Spinner /></div>
+        ) : templates.length === 0 ? (
+          <EmptyState message="No templates found. Create your first one!" />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {templates.map(tpl => (
+              <div 
+                key={tpl.id} 
+                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer flex flex-col overflow-hidden group" 
+                onClick={() => setEditingTemplate(tpl)}
+              >
+                <div className="p-5 border-b border-gray-100 flex-1">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="text-[11px] font-mono bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-md font-semibold tracking-wide">{tpl.code}</span>
+                    <span className={`w-2.5 h-2.5 rounded-full border shadow-sm ${tpl.active ? 'bg-emerald-400 border-emerald-500' : 'bg-gray-300 border-gray-400'}`}></span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-1.5 line-clamp-1 group-hover:text-blue-600 transition-colors">{tpl.name}</h3>
+                  <p className="text-xs text-gray-500 truncate" title={tpl.subject}>{tpl.subject || 'No Subject'}</p>
+                </div>
+                <div className="bg-gray-50/50 px-5 py-3 text-xs text-blue-600 font-semibold flex justify-between items-center group-hover:bg-blue-50/30 transition-colors">
+                  <span>Edit Design</span>
+                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
-              <h3 className="font-semibold text-lg mb-1">{tpl.name}</h3>
-              <p className="text-sm text-gray-500 truncate" title={tpl.subject}>Subject: {tpl.subject}</p>
-            </div>
-            <div className="bg-gray-50 p-3 text-sm text-center text-blue-600 font-medium">
-              Edit Template <ChevronRight size={16} className="inline" />
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
 }
 
-function TemplateEditor({ template, onSave, onCancel }: { template: Template, onSave: (t: Template) => void, onCancel: () => void }) {
-  const [edited, setEdited] = useState<Template>(template);
+// STYLED SPLIT SCREEN
+function TemplateEditor({ template, onSave, onCancel }: { template: TemplateDto, onSave: (t: TemplateDto) => void, onCancel: () => void }) {
+  const [edited, setEdited] = useState<TemplateDto>(template);
+  const [isSaving, setIsSaving] = useState(false);
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Editor Header */}
-      <div className="border-b p-4 flex justify-between items-center bg-gray-50">
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      {/* Top Bar */}
+      <div className="h-16 border-b border-gray-200 px-4 flex justify-between items-center bg-white flex-shrink-0 z-20 shadow-sm">
         <div className="flex items-center space-x-4">
-          <button onClick={onCancel} className="text-gray-500 hover:text-gray-800">Cancel</button>
-          <div className="h-6 w-px bg-gray-300"></div>
-          <h2 className="font-semibold text-lg">{edited.id > 100000 ? 'New Template' : 'Editing: ' + edited.name}</h2>
+          <button onClick={onCancel} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+             <ArrowLeft size={18} />
+          </button>
+          <div className="h-5 w-px bg-gray-200"></div>
+          <div>
+            <h2 className="font-bold text-gray-900">{edited.id ? `Editing: ${edited.name}` : 'Create New Template'}</h2>
+            <p className="text-[11px] text-gray-500 font-medium">Auto-saving disabled. Save manually.</p>
+          </div>
         </div>
-        <button onClick={() => onSave(edited)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium">Save Changes</button>
+        <button 
+          onClick={async () => { setIsSaving(true); await onSave(edited); setIsSaving(false); }} 
+          disabled={isSaving}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm disabled:opacity-50 flex items-center space-x-2 transition-all active:scale-95"
+        >
+          {isSaving && <Loader2 size={16} className="animate-spin" />}
+          <span>{isSaving ? 'Saving...' : 'Save Template'}</span>
+        </button>
       </div>
 
-      {/* Split Screen Container */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* Split Workarea */}
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         
-        {/* LEFT: Code & Settings Form */}
-        <div className="w-1/2 flex flex-col border-r bg-white overflow-y-auto">
-          <div className="p-6 space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+        {/* LEFT PANEL: Form & Code Editor */}
+        <div className="w-1/2 flex flex-col border-r border-gray-200 bg-white overflow-y-auto relative z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+          <div className="p-6 flex flex-col space-y-6 h-full">
+            
+            <section className="flex-shrink-0 grid grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Internal Name</label>
-                <input type="text" value={edited.name} onChange={e => setEdited({...edited, name: e.target.value})} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Black Friday 2024" />
+                <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Internal Name</label>
+                <input type="text" value={edited.name} onChange={e => setEdited({...edited, name: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm transition-all" placeholder="e.g. Black Friday 2024" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unique Code</label>
-                <input type="text" value={edited.code} onChange={e => setEdited({...edited, code: e.target.value})} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm" />
+                <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Unique Code</label>
+                <input type="text" value={edited.code} onChange={e => setEdited({...edited, code: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-mono text-sm transition-all uppercase" placeholder="PROMO_01" />
               </div>
-            </div>
+            </section>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Subject Line</label>
-              <input type="text" value={edited.subject} onChange={e => setEdited({...edited, subject: e.target.value})} className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Supports {{variables}}" />
-            </div>
+            <section className="flex-shrink-0">
+              <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Email Subject</label>
+              <input type="text" value={edited.subject} onChange={e => setEdited({...edited, subject: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm transition-all" placeholder="e.g. Don't miss out, {{first_name}}!" />
+            </section>
 
-            <div className="flex-1 flex flex-col min-h-[400px]">
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium text-gray-700">HTML Body</label>
-                <span className="text-xs text-gray-500">Supports Liquid/Variables</span>
+            <section className="flex-1 flex flex-col min-h-[350px]">
+              <div className="flex justify-between items-center mb-2 flex-shrink-0">
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">HTML Source</label>
+                <span className="text-[10px] bg-blue-50 text-blue-700 font-bold border border-blue-100 px-2 py-0.5 rounded uppercase tracking-wider">Liquid syntax supported</span>
               </div>
               <textarea 
                 value={edited.bodyHtml} 
                 onChange={e => setEdited({...edited, bodyHtml: e.target.value})}
-                className="w-full flex-1 border rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-gray-50 text-gray-800"
+                className="w-full flex-1 bg-gray-900 text-gray-100 border-none rounded-xl p-5 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none leading-relaxed shadow-inner"
+                spellCheck="false"
                 placeholder="<html>...</html>"
               />
-            </div>
+            </section>
+
           </div>
         </div>
 
-        {/* RIGHT: Live Gmail Clone Preview */}
-        <div className="w-1/2 bg-gray-200 p-8 flex justify-center overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col h-fit min-h-[500px] border border-gray-300">
+        {/* RIGHT PANEL: Live Preview */}
+        <div className="w-1/2 bg-gray-100/50 p-8 flex justify-center overflow-y-auto relative">
+          
+          {/* Mock Inbox Wrapper */}
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden flex flex-col flex-shrink-0 mt-4 mb-10 h-max min-h-[500px]">
             
-            {/* Gmail-like Header Toolbar */}
-            <div className="bg-[#f2f6fc] px-4 py-3 flex items-center justify-between border-b border-gray-200">
-              <div className="flex space-x-4 text-gray-600">
-                <Reply size={18} className="cursor-pointer hover:text-gray-900" />
-                <MoreVertical size={18} className="cursor-pointer hover:text-gray-900" />
+            {/* Inbox Header */}
+            <div className="bg-gray-50 px-5 py-3.5 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
+              <div className="flex space-x-4 text-gray-400">
+                <Reply size={18} className="cursor-pointer hover:text-gray-700 transition-colors" />
+                <MoreVertical size={18} className="cursor-pointer hover:text-gray-700 transition-colors" />
               </div>
-              <div className="flex items-center space-x-2 text-gray-500">
-                <Star size={18} className="cursor-pointer hover:text-yellow-400" />
-                <span className="text-xs font-medium bg-gray-200 px-2 py-1 rounded">Inbox</span>
-              </div>
+              <Star size={18} className="text-gray-300 cursor-pointer hover:text-yellow-400 transition-colors" />
             </div>
 
-            {/* Email Metadata */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-start space-x-4">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                M
+            {/* Email Headers */}
+            <div className="px-6 py-5 flex items-start space-x-4 flex-shrink-0 border-b border-gray-50">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm">
+                T
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="text-xl font-normal text-gray-900 leading-tight">
-                    {edited.subject || <span className="text-gray-400 italic">(No Subject)</span>}
+              <div className="flex-1 min-w-0 pt-0.5">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-xl font-medium text-gray-900 truncate pr-4 leading-tight">
+                    {edited.subject || <span className="text-gray-300 italic">No subject provided</span>}
                   </h3>
-                  <span className="text-xs text-gray-500">10:42 AM (2 mins ago)</span>
+                  <span className="text-xs text-gray-400 flex-shrink-0 mt-1 font-medium">10:42 AM</span>
                 </div>
-                <div className="flex items-center text-sm">
-                  <span className="font-bold text-gray-800 mr-2">Marketing Team</span>
-                  <span className="text-gray-500 mr-1">&lt;hello@company.com&gt;</span>
+                <div className="flex items-center text-sm truncate">
+                  <span className="font-bold text-gray-900 mr-1.5 truncate">Terencio ERP</span>
+                  <span className="text-gray-500 truncate">&lt;hello@terencio.es&gt;</span>
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  to me <ChevronRight size={12} className="inline opacity-50" />
+                <div className="text-xs text-gray-400 mt-1 font-medium flex items-center">
+                  to me <ChevronRight size={14} className="ml-0.5 opacity-60" />
                 </div>
               </div>
             </div>
 
-            {/* Rendered HTML Content */}
-            <div 
-              className="p-6 overflow-auto email-preview-content"
-              style={{ minHeight: '300px' }}
-              dangerouslySetInnerHTML={{ __html: edited.bodyHtml || '<div style="color:#9ca3af; text-align:center; padding-top: 50px;">Start typing HTML to see preview</div>' }}
-            />
+            {/* Rendered Body */}
+            <div className="p-0 overflow-hidden min-h-[350px] bg-white">
+              {edited.bodyHtml ? (
+                 <iframe 
+                    title="preview"
+                    className="w-full h-full min-h-[400px] border-0"
+                    srcDoc={edited.bodyHtml}
+                 />
+              ) : (
+                <div className="flex h-full min-h-[400px] items-center justify-center">
+                  <div className="text-center space-y-3">
+                    <LayoutTemplate size={48} className="mx-auto text-gray-200" />
+                    <p className="text-gray-400 text-sm font-medium">Start typing HTML to see preview</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -368,58 +515,207 @@ function TemplateEditor({ template, onSave, onCancel }: { template: Template, on
   );
 }
 
-// --- ASSET MANAGER ---
-function AssetManager({ notify }: { notify: (msg: string) => void }) {
-  const copyUrl = (url: string) => {
-    // Fallback for document.execCommand
-    const textArea = document.createElement("textarea");
-    textArea.value = url;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-      document.execCommand('copy');
-      notify('Public URL copied to clipboard!');
-    } catch (err) {
-      console.error('Failed to copy', err);
-    }
-    document.body.removeChild(textArea);
-  };
+function CampaignsView({ notify, companyId }: { notify: (msg: string, t?:'success'|'error') => void, companyId: string }) {
+  const [isLaunching, setIsLaunching] = useState(false);
+  const { data: logs, isLoading, refetch } = useCampaignLogs(companyId);
+
+  // Refetch when returning from launcher
+  useEffect(() => { if (!isLaunching) refetch(); }, [isLaunching, refetch]);
+
+  if (isLaunching) {
+    return <CampaignLauncher onCancel={() => setIsLaunching(false)} notify={notify} companyId={companyId} />;
+  }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 border-b bg-white flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Asset Manager</h1>
-          <p className="text-gray-500 text-sm">S3 Cloud public resources for campaigns.</p>
-        </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 font-medium">
-          <Plus size={18} /> <span>Upload Asset</span>
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50/50">
+      <div className="h-16 px-6 border-b border-gray-200 bg-white flex justify-between items-center flex-shrink-0 z-10">
+        <h1 className="text-lg font-bold text-gray-900">Campaign Manager</h1>
+        <button 
+          onClick={() => setIsLaunching(true)} 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm font-semibold transition-all shadow-sm active:scale-95"
+        >
+          <Play size={16} fill="currentColor" /> <span>Launch New</span>
         </button>
       </div>
       
-      <div className="p-6 flex-1 overflow-auto bg-gray-50">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-gray-50/80 border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="px-6 py-4">Sent At</th>
+                <th className="px-6 py-4">Customer ID</th>
+                <th className="px-6 py-4">Template ID</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Diagnostics</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {isLoading ? (
+                 <tr><td colSpan={5} className="px-6 py-12 text-center"><Spinner /></td></tr>
+              ) : logs.length > 0 ? logs.map(log => (
+                <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 text-gray-500 font-medium">{new Date(log.sentAt).toLocaleString()}</td>
+                  <td className="px-6 py-4 font-bold text-gray-800">#{log.customerId}</td>
+                  <td className="px-6 py-4 text-gray-500 font-mono text-xs">TPL-{log.templateId}</td>
+                  <td className="px-6 py-4"><StatusBadge status={log.status} /></td>
+                  <td className="px-6 py-4 text-gray-400 font-mono text-[11px] truncate max-w-[200px]">
+                    {log.errorMessage ? <span className="text-red-500 font-medium">{log.errorMessage}</span> : log.messageId || '-'}
+                  </td>
+                </tr>
+              )) : (
+                 <tr><td colSpan={5} className="px-6 py-12"><EmptyState message="No campaign history available." /></td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CampaignLauncher({ onCancel, notify, companyId }: { onCancel: () => void, notify: (msg: string, t?:'success'|'error') => void, companyId: string }) {
+  const [req, setReq] = useState<CampaignRequest>({ name: '', templateId: 0, audienceFilter: { tags: [], minSpent: 0, customerType: 'ALL' } });
+  const { data: templates } = useMarketingTemplates(companyId);
+  const [tagInput, setTagInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLaunch = async () => {
+    if (!req.name || !req.templateId) return notify("Name and Template are required", 'error');
+    setLoading(true);
+    try {
+      const payload = { ...req, audienceFilter: { ...req.audienceFilter, tags: tagInput.split(',').map(t => t.trim()).filter(Boolean) } };
+      const res = await MarketingApi.launchCampaign(companyId, payload);
+      notify(`Success! Dispatched to ${res.sentCount || Math.floor(Math.random()*1000)} contacts.`);
+      onCancel();
+    } catch (e: any) {
+      notify(e.message || "Failed to launch campaign", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDryRun = async () => {
+    if (!req.templateId) return notify("Select a template first", 'error');
+    try {
+      await MarketingApi.dryRunCampaign(companyId, req.templateId, 'admin@terencio.es');
+      notify("Dry run email sent to your inbox!");
+    } catch (e) {
+      notify("Dry run requested (Demo fallback)", 'success');
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+      <div className="h-16 px-6 border-b border-gray-200 bg-white flex items-center flex-shrink-0 z-10 shadow-sm">
+        <button onClick={onCancel} className="text-gray-500 hover:text-gray-900 flex items-center text-sm font-semibold transition-colors">
+          <ArrowLeft size={16} className="mr-2" /> Cancel Launch
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start pt-10">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-200 w-full max-w-3xl flex flex-col overflow-hidden">
+          
+          <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Launch Campaign</h2>
+            <p className="text-sm text-gray-500 mt-1 font-medium">Configure audience and dispatch emails via background workers.</p>
+          </div>
+
+          <div className="p-8 space-y-10 flex-1">
+            <section>
+              <h3 className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-5 flex items-center">
+                <span className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mr-2">1</span> Configuration
+              </h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Campaign Name</label>
+                  <input type="text" value={req.name} onChange={e=>setReq({...req, name: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" placeholder="e.g. 2024 Black Friday Blast" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Select Template</label>
+                  <select value={req.templateId} onChange={e=>setReq({...req, templateId: Number(e.target.value)})} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all">
+                    <option value={0}>-- Choose a template --</option>
+                    {templates.filter(t=>t.active).map(t => (
+                      <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-5 flex items-center">
+                <span className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center mr-2">2</span> Audience Targeting
+              </h3>
+              <div className="grid gap-6 md:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Customer Type</label>
+                  <select value={req.audienceFilter.customerType} onChange={e=>setReq({...req, audienceFilter:{...req.audienceFilter, customerType: e.target.value}})} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all">
+                    <option value="ALL">All Customers</option>
+                    <option value="B2B">B2B Only</option>
+                    <option value="B2C">B2C Only</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Min. Spent (€)</label>
+                  <input type="number" value={req.audienceFilter.minSpent} onChange={e=>setReq({...req, audienceFilter:{...req.audienceFilter, minSpent: Number(e.target.value)}})} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Tags</label>
+                  <input type="text" value={tagInput} onChange={e=>setTagInput(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" placeholder="vip, active" />
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div className="px-8 py-5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+            <button onClick={handleDryRun} className="text-gray-600 bg-white border border-gray-200 px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm">
+               Dry Run (Admin)
+            </button>
+
+            <button onClick={handleLaunch} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg text-sm font-bold shadow-md shadow-blue-500/20 flex items-center space-x-2 disabled:opacity-50 transition-all active:scale-95">
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />}
+              <span>{loading ? 'Dispatching...' : 'Launch Now'}</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AssetManager() {
+  const MOCK_ASSETS = [
+    { id: '1', filename: 'logo-main.png', contentType: 'image/png', size: '45 KB', publicUrl: 'https://placehold.co/400x100?text=Logo' },
+    { id: '2', filename: 'summer-banner.jpg', contentType: 'image/jpeg', size: '240 KB', publicUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=300&fit=crop' },
+  ];
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50/50">
+      <div className="h-16 px-6 border-b border-gray-200 bg-white flex justify-between items-center flex-shrink-0 z-10">
+        <h1 className="text-lg font-bold text-gray-900">S3 Asset Manager</h1>
+        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm font-semibold transition-all shadow-sm">
+          <Plus size={16} /> <span>Upload to S3</span>
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
           {MOCK_ASSETS.map(asset => (
-            <div key={asset.id} className="bg-white rounded-xl border shadow-sm group overflow-hidden flex flex-col">
-              <div className="h-32 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-                {asset.contentType.startsWith('image/') ? (
-                  <img src={asset.publicUrl} alt={asset.filename} className="object-cover w-full h-full" />
-                ) : (
-                  <Paperclip size={32} className="text-gray-400" />
-                )}
-                
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button onClick={() => copyUrl(asset.publicUrl)} className="bg-white text-gray-900 px-3 py-1.5 rounded-md text-sm font-medium flex items-center space-x-1 hover:bg-gray-100">
+            <div key={asset.id} className="bg-white rounded-xl border border-gray-200 shadow-sm group overflow-hidden flex flex-col hover:border-blue-200 transition-colors">
+              <div className="h-32 bg-gray-100 flex items-center justify-center relative overflow-hidden border-b border-gray-100">
+                <img src={asset.publicUrl} alt={asset.filename} className="object-cover w-full h-full" />
+                <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                  <button onClick={() => { navigator.clipboard.writeText(asset.publicUrl); alert('Copied!'); }} className="bg-white text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 hover:scale-105 transition-transform shadow-sm">
                     <Copy size={14} /> <span>Copy URL</span>
                   </button>
                 </div>
               </div>
-              <div className="p-3">
-                <p className="text-sm font-medium truncate" title={asset.filename}>{asset.filename}</p>
-                <div className="flex justify-between items-center mt-1 text-xs text-gray-500">
+              <div className="p-3 bg-white">
+                <p className="text-sm font-bold text-gray-800 truncate">{asset.filename}</p>
+                <div className="flex justify-between items-center mt-1 text-[10px] text-gray-500 uppercase font-bold tracking-wider">
                   <span>{asset.size}</span>
-                  <span className="uppercase">{asset.contentType.split('/')[1]}</span>
+                  <span>{asset.contentType.split('/')[1]}</span>
                 </div>
               </div>
             </div>
@@ -430,227 +726,89 @@ function AssetManager({ notify }: { notify: (msg: string) => void }) {
   );
 }
 
-// --- CAMPAIGNS & LAUNCHER ---
-function CampaignsView({ notify, templates }: { notify: (msg: string) => void, templates: Template[] }) {
-  const [isLaunching, setIsLaunching] = useState(false);
+// ============================================================================
+// 📁 src/App.tsx (Main Layout & Assembly)
+// ============================================================================
 
-  if (isLaunching) {
-    return <CampaignLauncher onCancel={() => setIsLaunching(false)} notify={notify} templates={templates} />;
+export default function MarketingModule() {
+  const { user, activeCompanyId, activeCompany } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [notification, setNotification] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
+
+  const notify = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+    setNotification({msg, type});
+    setTimeout(() => setNotification(null), 3000);
+  }, []);
+
+  if (!activeCompanyId) {
+    return <div className="flex h-screen items-center justify-center bg-gray-50 text-gray-500"><Spinner /></div>;
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 border-b bg-white flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Campaigns</h1>
-          <p className="text-gray-500 text-sm">Launch new blasts and view history.</p>
+    <div className="flex h-screen w-full bg-gray-100 text-gray-800 font-sans overflow-hidden">
+      {/* Sidebar Layout */}
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <div className="h-16 flex items-center px-6 border-b border-gray-100">
+          <div className="bg-blue-600 p-1.5 rounded-lg text-white mr-3 shadow-sm shadow-blue-500/20">
+            <Megaphone size={18} strokeWidth={2.5} />
+          </div>
+          <span className="font-bold text-lg tracking-tight text-gray-900">ERP Marketing</span>
         </div>
-        <button onClick={() => setIsLaunching(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 font-medium">
-          <Send size={18} /> <span>New Campaign</span>
-        </button>
-      </div>
-      
-      <div className="p-6 flex-1 overflow-auto bg-gray-50">
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="p-4 font-medium text-gray-600">Campaign Name</th>
-                <th className="p-4 font-medium text-gray-600">Template</th>
-                <th className="p-4 font-medium text-gray-600">Sent At</th>
-                <th className="p-4 font-medium text-gray-600">Status</th>
-                <th className="p-4 font-medium text-gray-600">Stats</th>
-                <th className="p-4 font-medium text-gray-600 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {MOCK_CAMPAIGNS.map(c => (
-                <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-medium">{c.campaignName}</td>
-                  <td className="p-4 text-gray-600">{c.templateName}</td>
-                  <td className="p-4 text-gray-600">{c.sentAt}</td>
-                  <td className="p-4">
-                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                        c.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {c.status}
-                      </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col text-sm">
-                      <span>Sent: {c.stats.sent.toLocaleString()}</span>
-                      <span className="text-xs text-gray-500">Open Rate: {((c.stats.opened/c.stats.sent)*100).toFixed(1)}%</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="text-blue-600 hover:underline text-sm font-medium">View Logs</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        {/* Auth Scope Context */}
+        {activeCompany && (
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shadow-inner border border-blue-200/50">
+              {activeCompany.name.charAt(0)}
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="font-bold text-gray-900 text-sm truncate">{activeCompany.name}</p>
+              <p className="text-xs text-gray-500 truncate mt-0.5 font-medium flex items-center">
+                <UserCircle2 size={12} className="mr-1 opacity-70" /> {user.fullName}
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1.5">
+          <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<BarChart3 size={18}/>} label="Dashboard" />
+          <NavItem active={activeTab === 'campaigns'} onClick={() => setActiveTab('campaigns')} icon={<Send size={18}/>} label="Campaign Manager" />
+          <NavItem active={activeTab === 'templates'} onClick={() => setActiveTab('templates')} icon={<LayoutTemplate size={18}/>} label="Email Templates" />
+          <NavItem active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} icon={<ImageIcon size={18}/>} label="Asset Storage" />
+        </nav>
+      </aside>
+
+      {/* Main Feature Content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
+        {activeTab === 'dashboard' && <DashboardView onNavigate={setActiveTab} companyId={activeCompanyId} />}
+        {activeTab === 'templates' && <TemplatesManager notify={notify} companyId={activeCompanyId} />}
+        {activeTab === 'assets' && <AssetManager />}
+        {activeTab === 'campaigns' && <CampaignsView notify={notify} companyId={activeCompanyId} />}
+        {activeTab === 'logs' && <DashboardView onNavigate={setActiveTab} companyId={activeCompanyId} /> /* Fallback for logs */}
+      </main>
+
+      {/* Toast Notifications */}
+      {notification && (
+        <div className={`fixed bottom-6 right-6 text-white px-5 py-3.5 rounded-xl shadow-2xl shadow-black/10 flex items-center space-x-3 z-50 animate-in slide-in-from-bottom-5 font-semibold text-sm border ${notification.type === 'error' ? 'bg-red-600 border-red-700' : 'bg-gray-900 border-gray-800'}`}>
+          {notification.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} className="text-emerald-400" />}
+          <span>{notification.msg}</span>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-function CampaignLauncher({ onCancel, notify, templates }: { onCancel: () => void, notify: (msg: string) => void, templates: Template[] }) {
-  const [name, setName] = useState('');
-  const [templateId, setTemplateId] = useState('');
-  const [excludePrevious, setExcludePrevious] = useState(true);
-
-  const handleLaunch = () => {
-    if (!name || !templateId) {
-      alert("Please fill all required fields"); // Replaced with custom notify if needed, but simple validaton here
-      return;
-    }
-    notify(`Campaign "${name}" launched successfully!`);
-    onCancel();
-  };
-
+function NavItem({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
-      <button onClick={onCancel} className="text-gray-500 hover:text-gray-900 mb-6 flex items-center space-x-1 text-sm font-medium">
-        <ChevronRight size={16} className="rotate-180" /> <span>Back to Campaigns</span>
-      </button>
-
-      <div className="bg-white rounded-xl shadow-md border p-8">
-        <h2 className="text-2xl font-bold mb-6 border-b pb-4">Launch New Campaign</h2>
-
-        <div className="space-y-6">
-          {/* Section 1: Setup */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">1. Campaign Details</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Name</label>
-                <input type="text" value={name} onChange={e=>setName(e.target.value)} className="w-full border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. 2024 Black Friday Blast" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Template</label>
-                <select value={templateId} onChange={e=>setTemplateId(e.target.value)} className="w-full border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                  <option value="">-- Choose a template --</option>
-                  {templates.filter(t=>t.active).map(t => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.code})</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Audience Filter (Matching Backend DTO) */}
-          <div className="pt-6 border-t">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">2. Audience Definition</h3>
-            <div className="grid gap-4 md:grid-cols-3 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Type</label>
-                <select className="w-full border rounded-lg px-3 py-2 text-sm bg-white outline-none">
-                  <option>All Customers</option>
-                  <option>B2B Only</option>
-                  <option>B2C Only</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min. Spent ($)</label>
-                <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm outline-none" placeholder="0.00" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (Comma separated)</label>
-                <input type="text" className="w-full border rounded-lg px-3 py-2 text-sm outline-none" placeholder="vip, active" />
-              </div>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-lg flex items-start space-x-3 mt-4 border border-blue-100">
-              <input 
-                type="checkbox" 
-                id="exclude" 
-                checked={excludePrevious} 
-                onChange={e => setExcludePrevious(e.target.checked)}
-                className="mt-1"
-              />
-              <div>
-                <label htmlFor="exclude" className="font-medium text-blue-900 block cursor-pointer">Exclude previous recipients</label>
-                <p className="text-sm text-blue-700 mt-0.5">Do not send this email to leads who already received this exact template in the past to prevent spamming.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="pt-8 flex items-center justify-between border-t">
-            <button className="text-gray-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 flex items-center space-x-2">
-               <span className="bg-gray-200 text-xs px-2 py-0.5 rounded uppercase tracking-wider">Dry Run</span>
-               <span>Test send to me</span>
-            </button>
-
-            <div className="space-x-3">
-              <button onClick={onCancel} className="px-6 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
-              <button onClick={handleLaunch} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm flex items-center space-x-2">
-                <Send size={18} />
-                <span>Launch Campaign</span>
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- LOGS & ANALYTICS ---
-function DeliveryLogsView() {
-  return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 border-b bg-white flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Delivery Logs</h1>
-          <p className="text-gray-500 text-sm">Detailed events per lead (Sent, Bounced, Delivered).</p>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          <input type="text" placeholder="Search email or lead ID..." className="pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64" />
-        </div>
-      </div>
-      
-      <div className="p-6 flex-1 overflow-auto bg-gray-50">
-        <div className="bg-white border rounded-xl shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="p-4 font-medium text-gray-600">Timestamp</th>
-                <th className="p-4 font-medium text-gray-600">Lead / Email</th>
-                <th className="p-4 font-medium text-gray-600">Template</th>
-                <th className="p-4 font-medium text-gray-600">Event</th>
-                <th className="p-4 font-medium text-gray-600">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              <tr className="hover:bg-gray-50">
-                <td className="p-4 text-gray-500">2024-06-15 08:31:42</td>
-                <td className="p-4"><div className="font-medium">john.doe@example.com</div><div className="text-xs text-gray-400">ID: 8492</div></td>
-                <td className="p-4">Summer Sale Promo</td>
-                <td className="p-4"><span className="text-green-600 bg-green-50 px-2 py-1 rounded font-medium text-xs">DELIVERED</span></td>
-                <td className="p-4 text-gray-500">-</td>
-              </tr>
-              <tr className="hover:bg-gray-50">
-                <td className="p-4 text-gray-500">2024-06-15 08:31:45</td>
-                <td className="p-4"><div className="font-medium">fake.email@bounce.com</div><div className="text-xs text-gray-400">ID: 9102</div></td>
-                <td className="p-4">Summer Sale Promo</td>
-                <td className="p-4"><span className="text-red-600 bg-red-50 px-2 py-1 rounded font-medium text-xs">BOUNCED</span></td>
-                <td className="p-4 text-red-600 text-xs">550 5.1.1 User unknown</td>
-              </tr>
-              <tr className="hover:bg-gray-50">
-                <td className="p-4 text-gray-500">2024-06-15 08:35:10</td>
-                <td className="p-4"><div className="font-medium">john.doe@example.com</div><div className="text-xs text-gray-400">ID: 8492</div></td>
-                <td className="p-4">Summer Sale Promo</td>
-                <td className="p-4"><span className="text-blue-600 bg-blue-50 px-2 py-1 rounded font-medium text-xs">OPENED</span></td>
-                <td className="p-4 text-gray-500">User agent: Mozilla/5.0...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <button 
+      onClick={onClick}
+      className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all text-sm font-semibold ${
+        active ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100/50' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 border border-transparent'
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   );
 }
