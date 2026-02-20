@@ -1,4 +1,4 @@
-import MarketingModule from '@/modules/marketing/MarktingPage';
+import { MarketingPage } from '@/modules/marketing/MarketingPage';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { MainLayout } from '../components/layout/MainLayout';
 import { PlaceholderPage } from '../components/layout/PlaceholderPage';
@@ -26,7 +26,7 @@ export function AppRoutes() {
         
         <Route path="/:companySlug/marketing" element={
           <ScopedView requiresCompany>
-            <MarketingModule />
+            <MarketingPage />
           </ScopedView>
         } />
 
