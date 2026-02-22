@@ -1,5 +1,4 @@
 
-import { useActiveContext } from "@/hooks/useScope";
 import {
   BarChart3,
   LayoutDashboard,
@@ -7,16 +6,14 @@ import {
   Menu,
   Package,
   Settings,
-  ShoppingCart,
   X
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { CompanySidebar } from "./CompanySidebar";
 import { Topbar } from "./Topbar";
 
 export function MainLayout() {
-  const { storeSlug } = useActiveContext();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('terencio_theme');
@@ -33,28 +30,13 @@ export function MainLayout() {
     }
   }, [isDarkMode]);
 
-  // Context-aware menu items
-  const menuItems = useMemo(() => {
-    if (storeSlug) {
-      // Store-level menu
-      return [
-        { id: "overview", label: "Store Dashboard", icon: LayoutDashboard, path: "" },
-        { id: "pos", label: "Point of Sale", icon: ShoppingCart, path: "/pos" },
-        { id: "inventory", label: "Inventory", icon: Package, path: "/inventory" },
-        { id: "reports", label: "Reports", icon: BarChart3, path: "/reports" },
-        { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
-      ];
-    } else {
-      // Company-level menu
-      return [
+  const menuItems = [
         { id: "overview", label: "Company Overview", icon: LayoutDashboard, path: "" },
         { id: "marketing", label: "Marketing", icon: Megaphone, path: "/marketing" },
         { id: "inventory", label: "Inventory", icon: Package, path: "/inventory" },
         { id: "reports", label: "Reports", icon: BarChart3, path: "/reports" },
         { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
       ];
-    }
-  }, [storeSlug]);
 
   return (
     <div className={isDarkMode ? "dark" : ""} style={{ backgroundColor: 'var(--background)', color: 'var(--text-primary)' }}>

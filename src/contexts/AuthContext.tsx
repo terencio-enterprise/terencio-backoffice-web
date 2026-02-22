@@ -1,10 +1,10 @@
 import { createContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
 import type { LoginRequest } from '../types/auth';
-import type { Employee } from '../types/entities';
+import type { EmployeeInfoDto } from '../types/entities';
 
 export interface AuthContextType {
-  user: Employee | null;
+  user: EmployeeInfoDto | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
@@ -14,29 +14,30 @@ export interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Employee | null>(null);
+  const [user, setUser] = useState<EmployeeInfoDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initial check on mount
   useEffect(() => {
-    checkAuth();
+    const init = async () => {
+      try {
+        const userData = await AuthService.getCurrentUser();
+        setUser(userData);
+      } catch {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    init();
   }, []);
-
-  const checkAuth = async () => {
-    try {
-      const userData = await AuthService.getCurrentUser();
-      setUser(userData);
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const login = async (credentials: LoginRequest) => {
     setIsLoading(true);
     try {
       await AuthService.login(credentials);
-      await checkAuth();
+      const userData = await AuthService.getCurrentUser();
+      setUser(userData);
     } finally {
       setIsLoading(false);
     }
