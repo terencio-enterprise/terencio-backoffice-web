@@ -3,9 +3,14 @@ import type { CompanyResponse } from '@/core/types/organization';
 
 
 export const CompanyService = {
-  getCompanyInfo: (companyId: string) => 
+  getCompanyInfo: (companyId: string) =>
     apiClient.get<CompanyResponse>(
       `/api/v1/companies/${companyId}`
+    ),
+
+  getUserCompanies: () =>
+    apiClient.get<CompanyResponse[]>(
+      `/api/v1/companies`
     ),
 }
 

@@ -13,7 +13,7 @@ export function CompanyLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { isDarkMode, setIsDarkMode } = useTheme();
   
-  const setGlobalCompany = useScopeStore((state) => state.setCompany);
+  const setActiveCompany = useScopeStore((state) => state.setActiveCompany);
   
   const [company, setCompany] = useState<CompanyResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,18 +26,18 @@ export function CompanyLayout() {
       try {
         const data = await CompanyService.getCompanyInfo(companyId);
         setCompany(data);
-        setGlobalCompany(companyId); 
+        setActiveCompany(data); 
       } catch (error) {
         console.error("Failed to load company context:", error);
         setCompany(null);
-        setGlobalCompany(null);
+        setActiveCompany(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCompanyData();
-  }, [companyId, setGlobalCompany]);
+  }, [companyId, setActiveCompany]);
 
   console.log(company);
 
