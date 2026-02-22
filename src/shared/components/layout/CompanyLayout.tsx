@@ -1,10 +1,11 @@
 import type { CompanyResponse } from "@/core/types/organization";
 import { CompanyService } from "@/features/company/services/company.service";
 import { useTheme } from "@/shared/hooks/useTheme";
+import { NotFoundPage } from "@/shared/view/NotFoundPage";
 import { useScopeStore } from "@/store/useScopeStore";
-import { LayoutDashboard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useParams } from "react-router-dom";
+import { LoadingScreen } from "../ui/LoadingScreen";
 import { CompanySidebar } from "./CompanySidebar";
 import { Topbar } from "./Topbar";
 
@@ -54,24 +55,9 @@ export function CompanyLayout() {
     }
   };
 
-  if (loading) return (
-    <div className="h-screen w-full flex items-center justify-center bg-[var(--background)]">
-      <div className="flex flex-col items-center gap-4">
-        <LayoutDashboard className="animate-spin-slow w-8 h-8" style={{ color: 'var(--accent)' }} />
-        <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Loading Workspace...</p>
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingScreen />
 
-  if (!company) return (
-    <div className="h-screen w-full flex items-center justify-center bg-[var(--background)]">
-      <div className="text-center p-8 rounded-2xl border bg-[var(--surface)] shadow-lg" style={{ borderColor: 'var(--border)' }}>
-        <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--danger)' }}>404</h1>
-        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Company not found</p>
-        <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>The workspace you are looking for does not exist or access is denied.</p>
-      </div>
-    </div>
-  );
+  if (!company) return <NotFoundPage />
 
   return (
     <div className={isDarkMode ? "dark" : ""}>

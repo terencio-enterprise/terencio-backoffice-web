@@ -2,6 +2,7 @@ import { LoginPage } from '@/features/auth/views/LoginPage';
 import { CompanyHome } from '@/features/company/pages/CompanyHome';
 import { CompanyLayout } from '@/shared/components/layout/CompanyLayout';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { NotFoundPage } from '@/shared/view/NotFoundPage';
 import { useScopeStore } from '@/store/useScopeStore';
 import { useEffect } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
@@ -83,7 +84,7 @@ const router = createBrowserRouter([
   { path: '/p/unsubscribe-confirm', element: <div>Unsubscribed</div> },
   { path: '/p/:companyId/lead', element: <div>Public Lead Form</div> },
 
-  { path: '*', element: <Navigate to="/" replace /> }
+  { path: '*', element: <NotFoundPage /> }
 ]);
 
 export function AppRoutes() {
