@@ -1,10 +1,15 @@
-import { useCompany } from "../context/CompanyContext";
-
+import type { CompanyResponse } from "@/core/types/organization";
+import { useOutletContext } from "react-router-dom";
 
 export function CompanyHome() {
-  const { company } = useCompany();
+  const { company } = useOutletContext<{ company: CompanyResponse }>();
 
   return (
-    <h1>Company Page {company?.name}</h1>
+    <div className="animate-in fade-in duration-500">
+      <h1 className="text-2xl font-bold">
+        {company?.name} Dashboard
+      </h1>
+      <p className="text-text-secondary">Welcome back to the corporate overview.</p>
+    </div>
   );
 }

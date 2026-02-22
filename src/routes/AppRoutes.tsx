@@ -37,8 +37,6 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <CompanyHome /> },
 
-          { path: 'overview', element: <div>Company Dashboard</div> },
-
           /* CRM */
           { path: 'crm', element: <div>Customer List</div> },
           { path: 'crm/:uuid', element: <div>Customer Detail</div> },
