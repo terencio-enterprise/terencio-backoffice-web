@@ -2,6 +2,8 @@ import { LoginPage } from '@/features/auth/views/LoginPage';
 import { CompanyHome } from '@/features/company/pages/CompanyHome';
 import { CompanyLayout } from '@/shared/components/layout/CompanyLayout';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { useScopeStore } from '@/store/useScopeStore';
+import { useEffect } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 
 function RootRedirect() {
@@ -12,11 +14,18 @@ function RootRedirect() {
   const firstCompany = user.companies?.[0];
   if (!firstCompany) return <div>No companies assigned</div>;
 
-  return <Navigate to={`/c/${firstCompany.id}/overview`} replace />;
+  return <Navigate to={`/c/${firstCompany.id}`} replace />;
 }
 
 function ProtectedGuard() {
   const { isAuthenticated, isLoading } = useAuth();
+  const fetchCompanies = useScopeStore((state) => state.fetchCompanies);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCompanies();
+    }
+  }, [isAuthenticated, fetchCompanies]);
 
   if (isLoading) return <div>Loading...</div>;
 

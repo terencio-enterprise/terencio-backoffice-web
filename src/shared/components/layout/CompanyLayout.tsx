@@ -2,15 +2,17 @@ import type { CompanyResponse } from "@/core/types/organization";
 import { CompanyService } from "@/features/company/services/company.service";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { useScopeStore } from "@/store/useScopeStore";
-import { LayoutDashboard, Menu, X } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet, useLocation, useParams } from "react-router-dom";
 import { CompanySidebar } from "./CompanySidebar";
 import { Topbar } from "./Topbar";
 
 export function CompanyLayout() {
   const { companyId } = useParams();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const location = useLocation();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
   const { isDarkMode, setIsDarkMode } = useTheme();
   
   const setActiveCompany = useScopeStore((state) => state.setActiveCompany);
@@ -39,68 +41,85 @@ export function CompanyLayout() {
     fetchCompanyData();
   }, [companyId, setActiveCompany]);
 
-  console.log(company);
+  // Close sidebar on mobile when route changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [location.pathname]);
+
+  const handleToggleSidebar = () => {
+    if (window.innerWidth >= 1024) {
+      setIsDesktopCollapsed(prev => !prev);
+    } else {
+      setIsMobileOpen(prev => !prev);
+    }
+  };
 
   if (loading) return (
-    <div className="h-screen w-full flex items-center justify-center bg-background text-text-secondary">
-      {/* Replace with a proper Spinner component later */}
-      <LayoutDashboard className="animate-spin-slow w-8 h-8" />
+    <div className="h-screen w-full flex items-center justify-center bg-[var(--background)]">
+      <div className="flex flex-col items-center gap-4">
+        <LayoutDashboard className="animate-spin-slow w-8 h-8" style={{ color: 'var(--accent)' }} />
+        <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Loading Workspace...</p>
+      </div>
     </div>
   );
 
   if (!company) return (
-    <div className="h-screen w-full flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-danger">404</h1>
-        <p className="text-text-secondary">Company not found or access denied.</p>
+    <div className="h-screen w-full flex items-center justify-center bg-[var(--background)]">
+      <div className="text-center p-8 rounded-2xl border bg-[var(--surface)] shadow-lg" style={{ borderColor: 'var(--border)' }}>
+        <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--danger)' }}>404</h1>
+        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Company not found</p>
+        <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>The workspace you are looking for does not exist or access is denied.</p>
       </div>
     </div>
   );
 
   return (
     <div className={isDarkMode ? "dark" : ""}>
-      <div className="min-h-screen flex flex-col lg:flex-row bg-background text-text-primary transition-colors">
+      {/* Root Container */}
+      <div className="flex h-screen w-full overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--background)', color: 'var(--text-primary)' }}>
         
-        {/* Mobile Toggle */}
-        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-surface border-border noSelect">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded flex items-center justify-center bg-accent">
-              <LayoutDashboard className="w-5 h-5 text-text-inverse" />
-            </div>
-            <span className="font-bold text-lg">Terencio</span>
-          </div>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="cursor-pointer">
-            {isSidebarOpen ? <X /> : <Menu />}
-          </button>
-        </div>
+        {/* Mobile Sidebar Backdrop */}
+        {isMobileOpen && (
+          <div 
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+            onClick={() => setIsMobileOpen(false)}
+            aria-hidden="true"
+          />
+        )}
 
-        {/* Main Sidebar */}
+        {/* Sidebar (Fixed on Desktop, Drawer on Mobile) */}
         <CompanySidebar 
-          isOpen={isSidebarOpen} 
-          setIsOpen={setIsSidebarOpen}
+          isMobileOpen={isMobileOpen}
+          setIsMobileOpen={setIsMobileOpen}
+          isDesktopCollapsed={isDesktopCollapsed}
           companyId={companyId ?? ''}
         />
 
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative z-0">
+          {/* Sticky Topbar */}
           <Topbar 
             isDarkMode={isDarkMode}
             setIsDarkMode={setIsDarkMode}
+            onToggleSidebar={handleToggleSidebar}
           />
 
-          {/* Scrollable Content Container */}
-          <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
-            <Outlet context={{ company }} />
-          </div>
-        </main>
+          {/* Scrollable Page Content */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar">
+            <div className="mx-auto max-w-[1600px] w-full h-full">
+              <Outlet context={{ company }} />
+            </div>
+          </main>
+        </div>
 
+        {/* Global Keyframes & Scrollbar styles */}
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-          .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-          .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+          .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+          .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
           .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
           .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-          .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
         `}} />
       </div>
     </div>
