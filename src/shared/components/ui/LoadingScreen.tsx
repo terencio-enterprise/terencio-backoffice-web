@@ -6,7 +6,7 @@ interface LoadingScreenProps {
   fullScreen?: boolean;
 }
 
-export function LoadingScreen({ message = "loading", fullScreen = true }: LoadingScreenProps) {
+export function LoadingScreen({ message = "common.loading", fullScreen = true }: LoadingScreenProps) {
   const { t } = useTranslation();
   return (
     <div 
