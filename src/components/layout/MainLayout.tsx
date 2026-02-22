@@ -1,18 +1,18 @@
 
 import { useActiveContext } from "@/hooks/useScope";
 import {
-    BarChart3,
-    LayoutDashboard,
-    Megaphone,
-    Menu,
-    Package,
-    Settings,
-    ShoppingCart,
-    X
+  BarChart3,
+  LayoutDashboard,
+  Megaphone,
+  Menu,
+  Package,
+  Settings,
+  ShoppingCart,
+  Sidebar,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
 export function MainLayout() {

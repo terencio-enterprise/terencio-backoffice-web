@@ -1,90 +1,50 @@
-import { MarketingPage } from '@/modules/marketing/MarketingPage';
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { MainLayout } from '../components/layout/MainLayout';
-import { PlaceholderPage } from '../components/layout/PlaceholderPage';
-import { ProtectedRoute } from '../components/layout/ProtectedRoute';
-import { ScopedView } from '../components/layout/ScopedView';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { LoginPage } from '../modules/auth/LoginPage';
-import { CompanyPage } from '../modules/company/CompanyPage';
-import { StorePage } from '../modules/store/StorePage';
 
+// const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+//   const auth = useContext(AuthContext);
+//   if (!auth) return null;
+//   if (auth.loading) return <div className="p-10 text-center font-bold">Verifying Session...</div>;
+//   return auth.user ? <>{children}</> : <Navigate to="/login" replace />;
+// };
+
+const router = createBrowserRouter([
+  { path: '/login', element: <LoginPage /> },
+  
+  // Admin Routes (Authenticated)
+  {
+    path: '/c/:companyId',
+    // element: <ProtectedRoute><AdminLayout /></ProtectedRoute>,
+    children: [
+      { index: true, element: <Navigate to="crm" replace /> },
+      { path: 'crm', element: <div className="text-2xl font-bold">Customer Directory</div> },
+      { path: 'crm/:uuid', element: <div className="text-2xl font-bold">Customer Profile View</div> },
+      {
+        path: 'marketing',
+        children: [
+          { path: 'overview', element: <div className="text-2xl font-bold">Marketing Dashboard</div> },
+          { path: 'campaigns', element: <div className="text-2xl font-bold">Campaign List</div> },
+          { path: 'templates', element: <div className="text-2xl font-bold">Template Gallery</div> },
+          { path: 'settings', element: <div className="text-2xl font-bold">Module Config</div> }
+        ]
+      }
+    ]
+  },
+
+  // Public Routes (Unauthenticated)
+  {
+    path: '/p',
+    children: [
+      { path: 'preferences', element: <div className="p-20 text-center text-3xl font-black">Preferences Center</div> },
+      { path: ':companyId/lead', element: <div className="p-20 text-center text-3xl font-black">Lead Capture Form</div> }
+    ]
+  },
+
+  // Root Redirect
+  { path: '/', element: <Navigate to="/login" replace /> },
+  { path: '*', element: <Navigate to="/" replace /> }
+]);
 
 export function AppRoutes() {
-  return (
-    <Routes>
-      {/* Login Route - Public */}
-      <Route path="/login" element={<LoginPage />} />
-      
-      {/* Protected Routes with Hierarchical Slugs */}
-      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        {/* Company-level routes: /:companySlug */}
-        <Route path="/:companySlug" element={
-          <ScopedView requiresCompany>
-            <CompanyPage />
-          </ScopedView>
-        } />
-        
-        <Route path="/:companySlug/marketing" element={
-          <ScopedView requiresCompany>
-            <MarketingPage />
-          </ScopedView>
-        } />
-
-        <Route path="/:companySlug/inventory" element={
-          <ScopedView requiresCompany>
-            <PlaceholderPage module="Company Inventory" />
-          </ScopedView>
-        } />
-
-        <Route path="/:companySlug/reports" element={
-          <ScopedView requiresCompany>
-            <PlaceholderPage module="Company Reports" />
-          </ScopedView>
-        } />
-
-        <Route path="/:companySlug/settings" element={
-          <ScopedView requiresCompany>
-            <PlaceholderPage module="Company Settings" />
-          </ScopedView>
-        } />
-        
-        {/* Store-level routes: /:companySlug/:storeSlug */}
-        <Route path="/:companySlug/:storeSlug" element={
-          <ScopedView requiresStore>
-            <StorePage />
-          </ScopedView>
-        } />
-
-        <Route path="/:companySlug/:storeSlug/pos" element={
-          <ScopedView requiresStore>
-            <PlaceholderPage module="Point of Sale" />
-          </ScopedView>
-        } />
-
-        <Route path="/:companySlug/:storeSlug/inventory" element={
-          <ScopedView requiresStore>
-            <PlaceholderPage module="Inventory" />
-          </ScopedView>
-        } />
-
-        <Route path="/:companySlug/:storeSlug/reports" element={
-          <ScopedView requiresStore>
-            <PlaceholderPage module="Store Reports" />
-          </ScopedView>
-        } />
-
-        <Route path="/:companySlug/:storeSlug/settings" element={
-          <ScopedView requiresStore>
-            <PlaceholderPage module="Store Settings" />
-          </ScopedView>
-        } />
-      </Route>
-      
-      {/* Root redirect - will be handled by ScopeContext initialization */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      
-      {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+  return <RouterProvider router={router} />;
 }

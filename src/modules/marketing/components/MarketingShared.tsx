@@ -1,7 +1,7 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Search } from "lucide-react";
-import React from "react";
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Search } from 'lucide-react';
+import React from 'react';
 
 export const Spinner = () => (
   <div className="flex justify-center items-center w-full h-32">
@@ -43,18 +43,15 @@ export function StatCard({ title, value, subtext, icon, trendUp }: { title: stri
 export function StatusBadge({ status }: { status: string }) {
   const mapping: Record<string, "default" | "success" | "danger" | "warning"> = {
     'COMPLETED': 'success',
-    'SCHEDULED': 'info',
+    'SCHEDULED': 'default',
     'SENDING': 'warning',
     'FAILED': 'danger',
     'DRAFT': 'default',
-    'DELIVERED': 'info',
+    'DELIVERED': 'default',
     'OPENED': 'success',
     'CLICKED': 'success',
-    'BOUNCED': 'warning',
+    'BOUNCED': 'danger',
     'COMPLAINED': 'danger'
   };
-  // Fallback to info for SCHEDULED to look different from success
-  const variant = status === 'SCHEDULED' || status === 'DELIVERED' ? 'secondary' : (mapping[status] || 'default');
-  
-  return <Badge variant={variant as any} className="uppercase text-[10px] tracking-wider px-2 py-0.5">{status}</Badge>;
+  return <Badge variant={mapping[status] || 'default'} className="uppercase text-[10px] tracking-wider px-2 py-0.5">{status}</Badge>;
 }
