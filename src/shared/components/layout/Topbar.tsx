@@ -1,7 +1,6 @@
 import { Bell, ChevronRight, Moon, Search, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { StoreSwitcher } from "./StoreSwitcher";
 
 interface TopbarProps {
   isDarkMode: boolean;
@@ -64,11 +63,6 @@ export function Topbar({ isDarkMode, setIsDarkMode }: TopbarProps) {
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full border-2" style={{ backgroundColor: 'var(--danger)', borderColor: 'var(--surface)' }}></span>
         </button>
         <div className="h-8 w-[1px] mx-2 hidden sm:block" style={{ backgroundColor: 'var(--border)' }}></div>
-        
-        {/* Store Switcher */}
-        <div className="hidden sm:block">
-          <StoreSwitcher />
-        </div>
       </div>
     </header>
   );

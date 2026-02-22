@@ -1,10 +1,9 @@
-import { useAuth } from "@/hooks/useAuth";
-import { useActiveContext } from "@/hooks/useScope";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
+import { useAuth } from "@/shared/hooks/useAuth";
 import { LogOut, Store, User } from "lucide-react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ScopeSelector } from "./ScopeSelector";
+import { useNavigate } from "react-router-dom";
 
 interface MenuItem {
   id: string;
@@ -17,41 +16,18 @@ interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   menuItems: MenuItem[];
+  companyId: string;
 }
 
-export function CompanySidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
+export function CompanySidebar({ isOpen, setIsOpen, menuItems, companyId }: SidebarProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { companySlug, storeSlug } = useActiveContext();
-  
-  const buildPath = (basePath: string) => {
-    if (!companySlug) return basePath;
-    
-    if (storeSlug) {
-      return `/${companySlug}/${storeSlug}${basePath}`;
-    } else {
-      return `/${companySlug}${basePath}`;
-    }
-  };
 
-  const isPathActive = (basePath: string) => {
-    // Handle empty path (overview/home)
-    if (basePath === '') {
-      // Check if we're at the root company or store level
-      const pathParts = location.pathname.split('/').filter(Boolean);
-      if (storeSlug) {
-        return pathParts.length === 2 && pathParts[0] === companySlug && pathParts[1] === storeSlug;
-      } else {
-        return pathParts.length === 1 && pathParts[0] === companySlug;
-      }
-    }
-    
-    // For other paths, check if pathname ends with the path
-    return location.pathname.endsWith(basePath);
-  };
-  
+  const isPathActive = useCallback((path: string) => {
+    return location.pathname === path;
+  }, []);
+
   return (
     <aside className={cn(
       "fixed inset-y-0 left-0 z-50 w-64 border-r transform transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0",
@@ -68,13 +44,13 @@ export function CompanySidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
       </div>
 
       {/* Scope Selector */}
-      <div className="px-4 mb-4">
+      {/* <div className="px-4 mb-4">
         <ScopeSelector />
-      </div>
+      </div> */}
 
       <nav className="px-4 mt-4 space-y-1">
         {menuItems.map((item) => {
-          const fullPath = buildPath(item.path);
+          const fullPath = '/' + companyId + '/' + item.path;
           const isActive = isPathActive(item.path);
           
           return (

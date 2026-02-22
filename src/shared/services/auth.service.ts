@@ -1,6 +1,6 @@
-﻿import type { LoginRequest, LoginResponse } from '@/types/auth';
-import type { EmployeeInfoDto } from '@/types/entities';
-import { apiClient } from '../api/http-client';
+﻿import { apiClient } from '@/core/lib/api-client';
+import type { LoginRequest, LoginResponse } from '@/core/types/auth';
+import type { EmployeeInfoDto } from '@/core/types/entities';
 
 export const AuthService = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {

@@ -1,4 +1,6 @@
 
+import { CompanySidebar } from "@/shared/components/layout/CompanySidebar";
+import { Topbar } from "@/shared/components/layout/Topbar";
 import {
   BarChart3,
   LayoutDashboard,
@@ -10,8 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { CompanySidebar } from "./CompanySidebar";
-import { Topbar } from "./Topbar";
+
 
 export function MainLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -56,10 +57,11 @@ export function MainLayout() {
         </div>
 
         {/* Main Sidebar */}
-        <CompanySidebar 
+        <CompanySidebar
           isOpen={isSidebarOpen} 
           setIsOpen={setIsSidebarOpen}
           menuItems={menuItems}
+          companyId={activeCompany?.slug}
         />
 
         {/* Main Content */}

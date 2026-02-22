@@ -1,13 +1,8 @@
-import { apiClient } from '@/api/http-client';
-import type {
-  CampaignAudienceMember,
-  CampaignResponse,
-  CreateCampaignRequest,
-  TemplateDto
-} from '@/types/marketing';
+import { apiClient } from "@/core/lib/api-client";
+import type { CampaignAudienceMember, CampaignResponse, CreateCampaignRequest, TemplateDto } from "@/core/types/marketing";
+
 
 export const MarketingService = {
-  // --- Templates ---
   getTemplates: (companyId: string) => 
     apiClient.get<TemplateDto[]>(
       `/api/v1/companies/${companyId}/marketing/templates`

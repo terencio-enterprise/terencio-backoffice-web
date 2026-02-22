@@ -1,8 +1,6 @@
 import { Download, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { PosStatusList } from "./PosStatusList";
-import { SalesChart } from "./SalesChart";
-import { StatsGrid } from "./StatsGrid";
+
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -22,15 +20,6 @@ export function DashboardPage() {
             <Plus className="w-4 h-4" /> {t('dashboard.newReport')}
           </button>
         </div>
-      </div>
-
-      {/* Stats Grid */}
-      <StatsGrid />
-
-      {/* Charts & Tables Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <SalesChart />
-        <PosStatusList />
       </div>
     </div>
   );

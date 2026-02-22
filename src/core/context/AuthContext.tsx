@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
+import { AuthService } from '@/shared/services/auth.service';
 import { createContext, useEffect, useState } from 'react';
-import { AuthService } from '../services/auth.service';
 import type { LoginRequest } from '../types/auth';
 import type { EmployeeInfoDto } from '../types/entities';
 
