@@ -1,25 +1,25 @@
 import { cn } from "@/core/lib/utils";
 import { useAuth } from "@/shared/hooks/useAuth";
-import { LogOut, Store, User } from "lucide-react";
+import { BarChart3, LayoutDashboard, LogOut, Megaphone, Package, Settings, Store, User } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  path: string;
-}
+const menuItems = [
+  { id: "overview", label: "Company Overview", icon: LayoutDashboard, path: "" },
+  { id: "marketing", label: "Marketing", icon: Megaphone, path: "/marketing" },
+  { id: "inventory", label: "Inventory", icon: Package, path: "/inventory" },
+  { id: "reports", label: "Reports", icon: BarChart3, path: "/reports" },
+  { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
+];
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  menuItems: MenuItem[];
   companyId: string;
 }
 
-export function CompanySidebar({ isOpen, setIsOpen, menuItems, companyId }: SidebarProps) {
+export function CompanySidebar({ isOpen, setIsOpen, companyId }: SidebarProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();

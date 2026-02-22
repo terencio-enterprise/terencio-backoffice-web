@@ -1,4 +1,5 @@
 import { LoginPage } from '@/features/auth/views/LoginPage';
+import { CompanyHome } from '@/features/company/pages/CompanyHome';
 import { CompanyLayout } from '@/shared/components/layout/CompanyLayout';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
@@ -34,7 +35,7 @@ const router = createBrowserRouter([
         path: '/c/:companyId',
         element: <CompanyLayout />,
         children: [
-          { index: true, element: <Navigate to="overview" replace /> },
+          { index: true, element: <CompanyHome /> },
 
           { path: 'overview', element: <div>Company Dashboard</div> },
 
@@ -46,8 +47,7 @@ const router = createBrowserRouter([
           {
             path: 'marketing',
             children: [
-              { index: true, element: <Navigate to="overview" replace /> },
-              { path: 'overview', element: <div>Marketing Dashboard</div> },
+              { index: true, element: <h1>Marketing</h1> },
 
               { path: 'campaigns', element: <div>Campaign List</div> },
               { path: 'campaigns/new', element: <div>Campaign Wizard</div> },

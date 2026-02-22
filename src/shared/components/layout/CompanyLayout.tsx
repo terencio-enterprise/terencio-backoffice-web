@@ -1,15 +1,13 @@
 
+import type { CompanyResponse } from "@/core/types/organization";
+import { CompanyService } from "@/features/company/services/company.service";
 import { useTheme } from "@/shared/hooks/useTheme";
 import {
-  BarChart3,
   LayoutDashboard,
-  Megaphone,
   Menu,
-  Package,
-  Settings,
   X
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useParams } from "react-router-dom";
 import { CompanySidebar } from "./CompanySidebar";
 import { Topbar } from "./Topbar";
@@ -19,14 +17,21 @@ export function CompanyLayout() {
   const { companyId } = useParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { isDarkMode, setIsDarkMode } = useTheme();
+  const [company, setCompany] = useState<CompanyResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const menuItems = [
-        { id: "overview", label: "Company Overview", icon: LayoutDashboard, path: "" },
-        { id: "marketing", label: "Marketing", icon: Megaphone, path: "/marketing" },
-        { id: "inventory", label: "Inventory", icon: Package, path: "/inventory" },
-        { id: "reports", label: "Reports", icon: BarChart3, path: "/reports" },
-        { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
-      ];
+  useEffect(() => {
+    if (!companyId) return;
+
+    CompanyService.getCompanyInfo(companyId)
+      .then(setCompany)
+      .catch(() => setCompany(null))
+      .finally(() => setLoading(false));
+
+  }, [companyId]);
+
+  if (loading) return <div>TODO: LOADER</div>;
+  if (!company) return <div>TODO: 404</div>;
 
   return (
     <div className={isDarkMode ? "dark" : ""} style={{ backgroundColor: 'var(--background)', color: 'var(--text-primary)' }}>
@@ -49,7 +54,6 @@ export function CompanyLayout() {
         <CompanySidebar 
           isOpen={isSidebarOpen} 
           setIsOpen={setIsSidebarOpen}
-          menuItems={menuItems}
           companyId={companyId ?? ''}
         />
 
