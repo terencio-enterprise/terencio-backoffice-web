@@ -1,9 +1,10 @@
 import { cn } from "@/core/lib/utils";
 import { useAuth } from "@/shared/hooks/useAuth";
-import { BarChart3, LayoutDashboard, LogOut, Megaphone, Package, Settings, Store, Users, X } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight, LayoutDashboard, LogOut, Megaphone, Package, Settings, Store, Users, X } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ScopeSelector } from "./ScopeSelector";
 
 const menuGroups = [
   {
@@ -33,10 +34,11 @@ interface SidebarProps {
   isMobileOpen: boolean;
   setIsMobileOpen: (open: boolean) => void;
   isDesktopCollapsed: boolean;
+  toggleDesktop: () => void;
   companyId: string;
 }
 
-export function CompanySidebar({ isMobileOpen, setIsMobileOpen, isDesktopCollapsed, companyId }: SidebarProps) {
+export function CompanySidebar({ isMobileOpen, setIsMobileOpen, isDesktopCollapsed, toggleDesktop, companyId }: SidebarProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -58,25 +60,43 @@ export function CompanySidebar({ isMobileOpen, setIsMobileOpen, isDesktopCollaps
       style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
     >
       {/* Header / Brand */}
-      <div className={cn("h-16 flex items-center px-6 border-b shrink-0 noSelect", isDesktopCollapsed ? "lg:justify-center lg:px-0" : "justify-between")} style={{ borderColor: 'var(--border)' }}>
-        <div className="flex items-center gap-3">
+      <div className={cn("h-16 flex items-center border-b shrink-0 noSelect", isDesktopCollapsed ? "justify-center px-0" : "justify-between px-6")} style={{ borderColor: 'var(--border)' }}>
+        
+        {/* Brand - hidden when collapsed on desktop */}
+        <div className={cn("flex items-center gap-3 overflow-hidden", isDesktopCollapsed && "lg:hidden")}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm shrink-0" style={{ backgroundColor: 'var(--accent)' }}>
             <Store className="w-4 h-4" style={{ color: 'var(--text-inverse)' }} />
           </div>
-          <div className={cn("transition-opacity duration-200 overflow-hidden", isDesktopCollapsed ? "lg:hidden lg:w-0 lg:opacity-0" : "w-auto opacity-100")}>
+          <div>
             <h1 className="font-bold text-lg leading-none tracking-tight whitespace-nowrap">Terencio</h1>
             <p className="text-[9px] uppercase tracking-widest font-bold mt-0.5 whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{t('branding.enterprise')}</p>
           </div>
         </div>
+
+        {/* Desktop Toggle Button (Standard accessible placement) */}
+        <button
+          onClick={toggleDesktop}
+          className={cn(
+            "hidden lg:flex items-center justify-center rounded-lg transition-colors cursor-pointer hover:bg-[var(--surface-alt)]",
+            isDesktopCollapsed ? "w-12 h-12" : "w-8 h-8 -mr-2"
+          )}
+          style={{ color: 'var(--text-secondary)' }}
+          title={isDesktopCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isDesktopCollapsed ? <ChevronRight size={22} /> : <ChevronLeft size={22} />}
+        </button>
+
         {/* Mobile Close Button */}
         <button 
           onClick={() => setIsMobileOpen(false)} 
-          className="lg:hidden p-1.5 rounded-md hover:bg-[var(--surface-hover)] transition-colors"
+          className="lg:hidden p-1.5 rounded-md hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
           style={{ color: 'var(--text-secondary)' }}
         >
           <X size={20} />
         </button>
       </div>
+
+      <ScopeSelector />
 
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto py-6 space-y-8 custom-scrollbar overflow-x-hidden" style={{ paddingLeft: isDesktopCollapsed ? '0.75rem' : '1rem', paddingRight: isDesktopCollapsed ? '0.75rem' : '1rem' }}>

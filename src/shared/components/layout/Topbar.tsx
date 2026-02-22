@@ -40,10 +40,10 @@ export function Topbar({ isDarkMode, setIsDarkMode, onToggleSidebar }: TopbarPro
     >
       <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0">
         
-        {/* Sidebar Toggle (Visible on Desktop and Mobile) */}
+        {/* Mobile Sidebar Toggle (Hidden on Desktop) */}
         <button 
           onClick={onToggleSidebar}
-          className="p-2 -ml-2 rounded-md transition-colors hover:bg-[var(--surface-hover)]"
+          className="lg:hidden p-2 -ml-2 rounded-md transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
           style={{ color: 'var(--text-secondary)' }}
           aria-label="Toggle Menu"
         >

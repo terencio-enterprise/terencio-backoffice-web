@@ -47,14 +47,6 @@ export function CompanyLayout() {
     setIsMobileOpen(false);
   }, [location.pathname]);
 
-  const handleToggleSidebar = () => {
-    if (window.innerWidth >= 1024) {
-      setIsDesktopCollapsed(prev => !prev);
-    } else {
-      setIsMobileOpen(prev => !prev);
-    }
-  };
-
   if (loading) return <LoadingScreen />
 
   if (!company) return <NotFoundPage />
@@ -78,6 +70,7 @@ export function CompanyLayout() {
           isMobileOpen={isMobileOpen}
           setIsMobileOpen={setIsMobileOpen}
           isDesktopCollapsed={isDesktopCollapsed}
+          toggleDesktop={() => setIsDesktopCollapsed(prev => !prev)}
           companyId={companyId ?? ''}
         />
 
@@ -87,7 +80,7 @@ export function CompanyLayout() {
           <Topbar 
             isDarkMode={isDarkMode}
             setIsDarkMode={setIsDarkMode}
-            onToggleSidebar={handleToggleSidebar}
+            onToggleSidebar={() => setIsMobileOpen(true)}
           />
 
           {/* Scrollable Page Content */}
@@ -97,16 +90,6 @@ export function CompanyLayout() {
             </div>
           </main>
         </div>
-
-        {/* Global Keyframes & Scrollbar styles */}
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-          .animate-spin-slow { animation: spin-slow 3s linear infinite; }
-          .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
-        `}} />
       </div>
     </div>
   );
