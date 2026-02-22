@@ -19,7 +19,7 @@ interface SidebarProps {
   menuItems: MenuItem[];
 }
 
-export function Sidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
+export function CompanySidebar({ isOpen, setIsOpen, menuItems }: SidebarProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();

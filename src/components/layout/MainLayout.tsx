@@ -8,11 +8,11 @@ import {
   Package,
   Settings,
   ShoppingCart,
-  Sidebar,
   X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
+import { CompanySidebar } from "./CompanySidebar";
 import { Topbar } from "./Topbar";
 
 export function MainLayout() {
@@ -74,7 +74,7 @@ export function MainLayout() {
         </div>
 
         {/* Main Sidebar */}
-        <Sidebar 
+        <CompanySidebar 
           isOpen={isSidebarOpen} 
           setIsOpen={setIsSidebarOpen}
           menuItems={menuItems}
