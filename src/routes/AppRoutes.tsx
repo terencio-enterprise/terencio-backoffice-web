@@ -1,47 +1,68 @@
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import { LoginPage } from '../modules/auth/LoginPage';
+import { LoginPage } from '@/features/auth/views/LoginPage';
+import { CompanyPage } from '@/features/company/views/CompanyPage';
+import { DashboardPage } from '@/features/dashboard/views/DashboardPage';
+import { StorePage } from '@/features/store/views/StorePage';
+import { MainLayout } from '@/shared/components/layout/MainLayout';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { Store } from 'lucide-react';
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 
-// const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-//   const auth = useContext(AuthContext);
-//   if (!auth) return null;
-//   if (auth.loading) return <div className="p-10 text-center font-bold">Verifying Session...</div>;
-//   return auth.user ? <>{children}</> : <Navigate to="/login" replace />;
-// };
+
+function ProtectedGuard() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="text-center animate-pulse">
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-[var(--accent)]">
+            <Store className="w-9 h-9 text-white" />
+          </div>
+          <p className="text-sm text-[var(--text-secondary)] font-medium">Verifying Session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+}
 
 const router = createBrowserRouter([
+  // Public Routes
   { path: '/login', element: <LoginPage /> },
-  
-  // Admin Routes (Authenticated)
+
+  // Protected App Shell
   {
-    path: '/c/:companyId',
-    // element: <ProtectedRoute><AdminLayout /></ProtectedRoute>,
+    element: <ProtectedGuard />,
     children: [
-      { index: true, element: <Navigate to="crm" replace /> },
-      { path: 'crm', element: <div className="text-2xl font-bold">Customer Directory</div> },
-      { path: 'crm/:uuid', element: <div className="text-2xl font-bold">Customer Profile View</div> },
       {
-        path: 'marketing',
+        path: '/',
+        element: <MainLayout />,
         children: [
-          { path: 'overview', element: <div className="text-2xl font-bold">Marketing Dashboard</div> },
-          { path: 'campaigns', element: <div className="text-2xl font-bold">Campaign List</div> },
-          { path: 'templates', element: <div className="text-2xl font-bold">Template Gallery</div> },
-          { path: 'settings', element: <div className="text-2xl font-bold">Module Config</div> }
+          // Base Redirect (Handled by Layout or logic below)
+          { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: 'dashboard', element: <DashboardPage /> },
+          
+          // Contextual Routes: /:companySlug or /:companySlug/:storeSlug
+          {
+            path: ':companySlug',
+            children: [
+              { index: true, element: <CompanyPage /> },
+              { path: ':storeSlug', element: <StorePage /> },
+              
+              // Nested Modules within Store/Company
+              { path: 'inventory', element: <div>Inventory View</div> },
+              { path: 'reports', element: <div>Reports View</div> },
+              { path: 'settings', element: <div>Settings View</div> },
+              { path: ':storeSlug/pos', element: <div>POS Terminal</div> }
+            ]
+          }
         ]
       }
     ]
   },
 
-  // Public Routes (Unauthenticated)
-  {
-    path: '/p',
-    children: [
-      { path: 'preferences', element: <div className="p-20 text-center text-3xl font-black">Preferences Center</div> },
-      { path: ':companyId/lead', element: <div className="p-20 text-center text-3xl font-black">Lead Capture Form</div> }
-    ]
-  },
-
-  // Root Redirect
-  { path: '/', element: <Navigate to="/login" replace /> },
+  // Fallback
   { path: '*', element: <Navigate to="/" replace /> }
 ]);
 
