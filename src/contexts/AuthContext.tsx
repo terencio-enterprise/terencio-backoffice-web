@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/auth.service';
 import type { LoginRequest } from '../types/auth';
@@ -17,7 +18,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<EmployeeInfoDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initial check on mount
   useEffect(() => {
     const init = async () => {
       try {
